@@ -1,19 +1,11 @@
-//! Encoder components: UMT5 text encoder, Conformer lyric encoder.
+//! Condition encoders for ACE-Step v1.5.
 //!
-//! The encoding pipeline produces a unified context for the transformer:
-//! ```text
-//! speaker_embeds [B, 512]     → Linear(512, 2560) → [B, 1, 2560]
-//! text [B, S_text, 768]       → Linear(768, 2560) → [B, S_text, 2560]
-//! lyrics [B, S_lyric] (int64) → Embedding(6693, 1024)
-//!                              → Conformer(6 layers)
-//!                              → Linear(1024, 2560) → [B, S_lyric, 2560]
-//!
-//! context = cat([speaker, text, lyrics], dim=1) → [B, 1+S_text+S_lyric, 2560]
-//! ```
+//! - [`text`] — Qwen3-Embedding-0.6B wrapper (caption encoding + lyric embedding)
+//! - [`lyric`] — lyric encoder (8-layer transformer on Qwen3 token embeddings)
+//! - [`timbre`] — timbre encoder (4-layer transformer on reference audio features)
+//! - [`condition`] — combines text, lyrics, and timbre into packed condition sequence
 
-pub mod conformer;
-pub mod lyric_tokenizer;
-
-// TODO: implement UMT5 wrapper (reuse candle_transformers::models::t5)
-// TODO: implement ConformerEncoder (6-layer relative-position self-attention)
-// TODO: implement lyric BPE tokenizer
+pub mod condition;
+pub mod lyric;
+pub mod text;
+pub mod timbre;

@@ -16,7 +16,7 @@ pub enum Error {
     #[error("tokenizer: {0}")]
     Tokenizer(TokenizerError),
 
-    /// Audio processing error (STFT, resampling, WAV I/O).
+    /// Audio processing error.
     #[error("audio: {0}")]
     Audio(String),
 

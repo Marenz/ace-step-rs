@@ -1,35 +1,28 @@
 [package]
 name = "ace-step-rs"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
-description = "ACE-Step music generation in pure Rust via candle"
+description = "ACE-Step v1.5 music generation in pure Rust via candle"
 license = "MIT"
 repository = "https://github.com/marenz/ace-step-rs"
 
 [dependencies]
-# ML framework
-candle-core = "0.9"
-candle-nn = "0.9"
-candle-transformers = "0.9"
+# ML framework (local candle with cuDNN ConvTranspose1d patch)
+candle-core = { path = "/home/marenz/repos/candle/candle-core" }
+candle-nn = { path = "/home/marenz/repos/candle/candle-nn" }
+candle-transformers = { path = "/home/marenz/repos/candle/candle-transformers" }
 
-# Tokenization (UMT5 + lyric BPE)
+# Tokenization (Qwen3 tokenizer)
 tokenizers = "0.21"
-
-# FFT for mel spectrogram
-rustfft = "6"
 
 # Audio I/O
 hound = "3.5"
-
-# Resampling (44100 → 48000)
-rubato = "0.16"
 
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # Error handling
-anyhow = "1"
 thiserror = "2"
 
 # Logging
@@ -37,7 +30,6 @@ tracing = "0.1"
 
 # Random number generation
 rand = "0.9"
-rand_chacha = "0.9"
 
 # Model downloads
 hf-hub = "0.4"
@@ -48,11 +40,15 @@ half = "2"
 # Numerical traits
 num-traits = "0.2"
 
+# Zip archive reading (for loading .pt files)
+zip = "2"
+
 [dev-dependencies]
 approx = "0.5"
 tempfile = "3"
+tracing-subscriber = "0.3"
 
 [features]
 default = ["cuda"]
-cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda", "candle-core/cudnn"]
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]

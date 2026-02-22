@@ -1,36 +1,30 @@
-//! ACE-Step music generation in pure Rust.
+//! ACE-Step v1.5 music generation in pure Rust.
 //!
-//! A candle-based implementation of the ACE-Step flow-matching diffusion
+//! A candle-based implementation of the ACE-Step v1.5 flow-matching diffusion
 //! transformer for text-to-music generation. Loads original safetensors
 //! weights directly — no ONNX conversion needed.
 //!
 //! ## Architecture
 //!
-//! The pipeline transforms text (tags + lyrics) into stereo audio:
-//!
 //! ```text
-//! tags → UMT5 encoder ──┐
-//!                        ├→ cross-attention context
-//! lyrics → Conformer ───┘
-//!                        ↓
-//!              DiT (24 blocks, flow matching)
-//!                        ↓
-//!              DCAE decoder (latent → mel)
-//!                        ↓
-//!              ADaMoSHiFiGAN vocoder (mel → audio)
+//! caption → Qwen3-Embedding (full encoder) ──┐
+//!                                             ├→ packed condition sequence
+//! lyrics → Qwen3-Embedding (embed only) ─────┤
+//!   → lyric encoder (8-layer transformer)    │
+//!                                             │
+//! ref audio → timbre encoder (4-layer) ───────┘
+//!                                             ↓
+//!              DiT (24 layers, GQA, sliding window + full attn)
+//!              flow matching, 8-step turbo ODE
+//!                                             ↓
+//!              AutoencoderOobleck VAE (latent → 48kHz stereo waveform)
 //! ```
-//!
-//! ## Modules
-//!
-//! - [`audio`] — mel spectrogram (STFT + filterbank), WAV I/O, resampling
-//! - [`model`] — transformer, encoder, DCAE decoder, vocoder
-//! - [`scheduler`] — flow-matching schedulers (Euler, Heun, PingPong)
-//! - [`pipeline`] — end-to-end inference pipeline
 
 pub mod audio;
+pub mod config;
 pub mod model;
 pub mod pipeline;
-pub mod scheduler;
+pub mod vae;
 
 mod error;
 
