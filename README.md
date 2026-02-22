@@ -112,9 +112,9 @@ For cuDNN-accelerated ConvTranspose1d (faster VAE decode):
 cargo build --release --features cudnn
 ```
 
-Requires a [candle fork](https://github.com/Marenz/candle/tree/fast-conv-transpose1d-no-cudnn) with two upstream PRs:
-- [cuDNN ConvTranspose1d](https://github.com/huggingface/candle/pull/3383) — 100x faster VAE decode vs the default CPU fallback kernel
+Requires a [candle fork](https://github.com/Marenz/candle/tree/fast-conv-transpose1d-no-cudnn) with the following upstream PRs:
 - [public `Model::clear_kv_cache` for Qwen3](https://github.com/huggingface/candle/pull/3381) — needed to reset KV state between inference calls
+- [cuDNN ConvTranspose1d](https://github.com/huggingface/candle/pull/3383) (optional) — 100x faster VAE decode vs the default CPU fallback kernel
 
 Depending on your system, you may need additional environment variables for the CUDA build — see [AGENTS.md](AGENTS.md) for platform-specific notes.
 
