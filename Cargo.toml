@@ -89,13 +89,7 @@ vorbis_rs = { version = "0.5", optional = true }
 version = "0.2"
 optional = true
 
-[[example]]
-name = "stream_cli"
-required-features = ["cli"]
-
-[[example]]
-name = "stream_daemon"
-required-features = ["cli"]
-
-[[example]]
-name = "generation_daemon"
+[[bin]]
+name = "generation-daemon"
+path = "src/bin/generation-daemon.rs"
+required-features = ["audio-ogg"]
