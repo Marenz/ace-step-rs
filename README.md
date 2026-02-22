@@ -4,7 +4,36 @@ Pure Rust implementation of [ACE-Step v1.5](https://github.com/ACE-Step/ACE-Step
 
 Generates up to 10 minutes of stereo 48kHz audio from text captions and lyrics.
 
-## Quick Start
+## Binaries
+
+### `ace-step` — CLI
+
+One-shot generation from the command line. Prints a JSON summary to stdout on success.
+
+```bash
+ace-step \
+  --caption "upbeat jazz with piano and drums, bpm: 120, key: C major" \
+  --lyrics "[verse]\nWalking down the street on a sunny day" \
+  --duration 30 \
+  --output output.ogg
+```
+
+### `generation-daemon` — Unix socket daemon
+
+Keeps the pipeline resident in VRAM across requests. Each client sends one JSON request line and receives one JSON response line.
+
+Socket: `/tmp/ace-step-gen.sock` (override with `--socket`).
+
+```sh
+echo '{"caption":"ambient piano","duration_s":20,"output":"/tmp/piano.ogg"}' \
+  | socat - UNIX-CONNECT:/tmp/ace-step-gen.sock
+```
+
+Uses the `GenerationManager` internally — monitors VRAM, proactively offloads to CPU on low memory, retries on CUDA OOM. Exits on unrecoverable failure so systemd can restart.
+
+Requires the `audio-ogg` feature.
+
+## Library
 
 ```rust
 use ace_step_rs::pipeline::{AceStepPipeline, GenerationParams};
@@ -15,21 +44,33 @@ fn main() -> ace_step_rs::Result<()> {
 
     let params = GenerationParams {
         caption: "upbeat jazz with piano and drums".to_string(),
-        metas: "bpm: 120, key: C major, genre: jazz".to_string(),
         lyrics: "[verse]\nWalking down the street on a sunny day\n".to_string(),
-        language: "en".to_string(),
         duration_s: 30.0,
         ..Default::default()
     };
 
     let audio = pipeline.generate(&params)?;
-    ace_step_rs::audio::write_wav("output.wav", &audio.samples, audio.sample_rate, audio.channels)?;
+    ace_step_rs::audio::write_audio("output.wav", &audio.samples, audio.sample_rate, audio.channels)?;
 
     Ok(())
 }
 ```
 
 Model weights (~6GB) are downloaded automatically from [ACE-Step/Ace-Step1.5](https://huggingface.co/ACE-Step/Ace-Step1.5) on first run and cached in `~/.cache/huggingface/`.
+
+### Key modules
+
+| Module | Description |
+|--------|-------------|
+| `pipeline` | End-to-end inference: text encoding → diffusion → VAE decode |
+| `manager` | `GenerationManager` — keeps the pipeline resident, queues requests, VRAM monitoring + OOM retry |
+| `radio` | `RadioStation` — whole-song generation with request queue, auto-duration from lyrics |
+| `audio` | WAV/OGG/MP3 I/O |
+| `vae` | AutoencoderOobleck decoder (latent → 48kHz stereo waveform) |
+
+### Radio station
+
+`RadioStation` manages a song request queue and generates complete tracks sequentially. Duration is auto-estimated from lyrics (8s per line, clamped to 100–600s). The `radio_daemon` example wires this to cpal audio output with gapless double-buffered playback, Unix socket control, and skip/queue/history commands.
 
 ## Architecture
 
@@ -65,6 +106,12 @@ Requires CUDA toolkit 12.x and a compatible NVIDIA GPU.
 cargo build --release --features cuda
 ```
 
+For cuDNN-accelerated ConvTranspose1d (faster VAE decode):
+
+```bash
+cargo build --release --features cudnn
+```
+
 Depending on your system, you may need additional environment variables for the CUDA build — see [AGENTS.md](AGENTS.md) for platform-specific notes.
 
 ### Metal (macOS)
@@ -75,12 +122,23 @@ cargo build --release --features metal
 
 Note: Metal support is provided by candle but has not been tested with this project.
 
+### Building the daemon
+
+```bash
+cargo build --release --bin generation-daemon --features cuda,audio-ogg
+```
+
 ## Features
 
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `cuda` | yes | NVIDIA GPU acceleration via CUDA + cuDNN |
+| `cuda` | yes | NVIDIA GPU acceleration via CUDA |
+| `cudnn` | no | cuDNN-accelerated ConvTranspose1d (implies `cuda`) |
 | `metal` | no | Apple GPU acceleration via Metal |
+| `cli` | no | Audio playback + terminal input (cpal, rodio, crossterm) |
+| `audio-ogg` | no | OGG/Vorbis encoding (required by `generation-daemon`) |
+| `audio-mp3` | no | MP3 encoding |
+| `audio-all` | no | All audio encoders |
 
 ## `GenerationParams`
 
@@ -93,6 +151,9 @@ Note: Metal support is provided by candle but has not been tested with this proj
 | `duration_s` | `f64` | `30.0` | Output duration in seconds (max 600) |
 | `shift` | `f64` | `3.0` | Turbo schedule shift (1, 2, or 3) |
 | `seed` | `Option<u64>` | `None` | Random seed for reproducibility |
+| `src_latents` | `Option<Tensor>` | `None` | Source latents for repaint/inpainting |
+| `chunk_masks` | `Option<Tensor>` | `None` | Mask for repaint (0 = keep, 1 = generate) |
+| `refer_audio` | `Option<Tensor>` | `None` | Reference audio latents for timbre conditioning |
 
 ## Performance
 
