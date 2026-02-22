@@ -55,7 +55,9 @@ fn bench(label: &str, encoder: &mut Qwen3TextEncoder, device: &Device) -> anyhow
     let min = times.iter().cloned().fold(f64::INFINITY, f64::min);
     let max = times.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
 
-    println!("{label:6}  mean={mean:7.1}ms  min={min:7.1}ms  max={max:7.1}ms  (seq_len={SEQ_LEN}, {ITERS} iters)");
+    println!(
+        "{label:6}  mean={mean:7.1}ms  min={min:7.1}ms  max={max:7.1}ms  (seq_len={SEQ_LEN}, {ITERS} iters)"
+    );
     Ok(())
 }
 

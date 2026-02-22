@@ -9,7 +9,7 @@
 
 use std::collections::VecDeque;
 
-use crate::pipeline::{format_metas, AceStepPipeline, GeneratedAudio, GenerationParams};
+use crate::pipeline::{AceStepPipeline, GeneratedAudio, GenerationParams, format_metas};
 
 /// A request for a single song.
 #[derive(Debug, Clone)]

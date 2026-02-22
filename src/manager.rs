@@ -211,7 +211,9 @@ fn offload_to_cpu(
                 Err(gpu_error) => {
                     // Total failure — panic so the thread dies and the channel closes,
                     // which will surface as errors to all future callers.
-                    panic!("both CPU offload and GPU reload failed: offload={reload_error}, gpu={gpu_error}");
+                    panic!(
+                        "both CPU offload and GPU reload failed: offload={reload_error}, gpu={gpu_error}"
+                    );
                 }
             }
         }

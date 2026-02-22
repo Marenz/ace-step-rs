@@ -10,32 +10,58 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Check & Test
+  fmt:
+    name: Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: dtolnay/rust-toolchain@stable
+      - run: cargo fmt -- --check
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
-      # Candle deps use local path refs that don't exist in CI.
-      # Swap them for the matching crates.io release.
       - name: Patch candle deps for CI
         run: |
           sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
           sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
           sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
 
-      - name: Check formatting
-        run: cargo fmt -- --check
+      - run: cargo build --no-default-features
 
-      - name: Build (CPU only)
-        run: cargo build --no-default-features
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Run tests
-        run: cargo test --no-default-features
+      - name: Patch candle deps for CI
+        run: |
+          sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
+          sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
+          sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
 
-      - name: Clippy
-        run: cargo clippy --no-default-features -- -D warnings
+      - run: cargo test --no-default-features
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Patch candle deps for CI
+        run: |
+          sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
+          sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
+          sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
+
+      - run: cargo clippy --no-default-features -- -D warnings

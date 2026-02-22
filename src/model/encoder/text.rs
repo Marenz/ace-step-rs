@@ -152,7 +152,9 @@ pub fn format_metas(
         Some(d) if d > 0.0 => format!("{} seconds", d as u32),
         _ => "N/A".to_string(),
     };
-    format!("- bpm: {bpm_str}\n- timesignature: {ts_str}\n- keyscale: {ks_str}\n- duration: {dur_str}\n")
+    format!(
+        "- bpm: {bpm_str}\n- timesignature: {ts_str}\n- keyscale: {ks_str}\n- duration: {dur_str}\n"
+    )
 }
 
 /// Format lyrics into the ACE-Step v1.5 lyric template.

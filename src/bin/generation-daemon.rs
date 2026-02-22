@@ -304,13 +304,23 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
         Err(e) => return Response::err(format!("generation failed: {e}")),
     };
 
-    if let Err(e) = write_audio(&output_path, &audio.samples, audio.sample_rate, audio.channels) {
+    if let Err(e) = write_audio(
+        &output_path,
+        &audio.samples,
+        audio.sample_rate,
+        audio.channels,
+    ) {
         return Response::err(format!("failed to write audio file: {e}"));
     }
 
     tracing::info!(output = %output_path, "done");
 
-    Response::ok(output_path, req.duration_s, audio.sample_rate, audio.channels)
+    Response::ok(
+        output_path,
+        req.duration_s,
+        audio.sample_rate,
+        audio.channels,
+    )
 }
 
 async fn send_response(
