@@ -6,7 +6,7 @@
 //! - [`tokenizer`] — audio tokenizer (FSQ) and detokenizer
 //! - [`generation`] — top-level generation model combining all components
 
-pub mod transformer;
 pub mod encoder;
-pub mod tokenizer;
 pub mod generation;
+pub mod tokenizer;
+pub mod transformer;

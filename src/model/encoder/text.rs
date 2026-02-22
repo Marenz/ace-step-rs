@@ -69,7 +69,10 @@ impl Qwen3TextEncoder {
     /// Output: `hidden_states` [B, T, 1024] — last hidden states
     ///
     /// Uses causal attention (matching Python's Qwen3Model behavior).
+    /// Clears the KV cache before each call so repeated invocations
+    /// don't accumulate stale state.
     pub fn encode_text(&mut self, token_ids: &Tensor) -> Result<Tensor> {
+        self.model.clear_kv_cache();
         self.model.forward(token_ids, 0)
     }
 
@@ -104,10 +107,47 @@ impl Qwen3TextEncoder {
 /// # Metas
 /// {metas}<|endoftext|>
 /// ```
+///
+/// The metas string must be in the training format. Use [`format_metas`] to build it.
 pub fn format_caption_prompt(caption: &str, metas: &str) -> String {
     format!(
         "# Instruction\nFill the audio semantic mask based on the given conditions:\n\n# Caption\n{caption}\n\n# Metas\n{metas}<|endoftext|>\n"
     )
+}
+
+/// Build a metas string in the format the model was trained on.
+///
+/// ```text
+/// - bpm: 120
+/// - timesignature: 4/4
+/// - keyscale: C major
+/// - duration: 30 seconds
+/// ```
+///
+/// Pass `None` or empty string for unknown fields — they'll be set to "N/A".
+pub fn format_metas(
+    bpm: Option<u32>,
+    time_signature: Option<&str>,
+    key_scale: Option<&str>,
+    duration_s: Option<f64>,
+) -> String {
+    let bpm_str = match bpm {
+        Some(b) => b.to_string(),
+        None => "N/A".to_string(),
+    };
+    let ts_str = match time_signature {
+        Some(ts) if !ts.is_empty() => ts.to_string(),
+        _ => "N/A".to_string(),
+    };
+    let ks_str = match key_scale {
+        Some(ks) if !ks.is_empty() => ks.to_string(),
+        _ => "N/A".to_string(),
+    };
+    let dur_str = match duration_s {
+        Some(d) if d > 0.0 => format!("{} seconds", d as u32),
+        _ => "N/A".to_string(),
+    };
+    format!("- bpm: {bpm_str}\n- timesignature: {ts_str}\n- keyscale: {ks_str}\n- duration: {dur_str}\n")
 }
 
 /// Format lyrics into the ACE-Step v1.5 lyric template.
@@ -143,10 +183,33 @@ mod tests {
 
     #[test]
     fn test_format_caption_prompt() {
-        let prompt = format_caption_prompt("jazz piano", "bpm: 120, key: C major");
+        let metas = format_metas(Some(120), Some("4/4"), Some("C major"), Some(30.0));
+        let prompt = format_caption_prompt("jazz piano", &metas);
         assert!(prompt.contains("# Caption\njazz piano"));
-        assert!(prompt.contains("# Metas\nbpm: 120, key: C major<|endoftext|>"));
+        assert!(prompt.contains("- bpm: 120\n"));
+        assert!(prompt.contains("- keyscale: C major\n"));
         assert!(prompt.starts_with("# Instruction\n"));
+    }
+
+    #[test]
+    fn test_format_metas() {
+        let m = format_metas(Some(120), Some("4/4"), Some("C major"), Some(30.0));
+        assert_eq!(
+            m,
+            "- bpm: 120\n- timesignature: 4/4\n- keyscale: C major\n- duration: 30 seconds\n"
+        );
+
+        let m2 = format_metas(None, None, None, None);
+        assert_eq!(
+            m2,
+            "- bpm: N/A\n- timesignature: N/A\n- keyscale: N/A\n- duration: N/A\n"
+        );
+
+        let m3 = format_metas(Some(90), None, Some("D minor"), Some(60.0));
+        assert!(m3.contains("- bpm: 90\n"));
+        assert!(m3.contains("- timesignature: N/A\n"));
+        assert!(m3.contains("- keyscale: D minor\n"));
+        assert!(m3.contains("- duration: 60 seconds\n"));
     }
 
     #[test]
@@ -185,6 +248,13 @@ mod tests {
         let input = Tensor::zeros((1, 5), DType::U32, &dev).unwrap();
         let out = enc.encode_text(&input).unwrap();
         assert_eq!(out.dims(), &[1, 5, 32]);
+
+        // Calling encode_text again (different length) must not fail.
+        // Regression test: without KV cache clearing, the second call
+        // would hit a shape mismatch (stale cache from the first call).
+        let input2 = Tensor::zeros((1, 8), DType::U32, &dev).unwrap();
+        let out2 = enc.encode_text(&input2).unwrap();
+        assert_eq!(out2.dims(), &[1, 8, 32]);
 
         // Test embed_lyrics
         let lyric_out = enc.embed_lyrics(&input).unwrap();

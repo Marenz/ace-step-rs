@@ -43,6 +43,11 @@ num-traits = "0.2"
 # Zip archive reading (for loading .pt files)
 zip = "2"
 
+# CLI audio playback + terminal input (behind "cli" feature)
+rodio = { version = "0.20", optional = true }
+crossterm = { version = "0.28", optional = true }
+tracing-subscriber = { version = "0.3", optional = true }
+
 [dev-dependencies]
 approx = "0.5"
 tempfile = "3"
@@ -53,3 +58,8 @@ default = ["cuda"]
 cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
 cudnn = ["cuda", "candle-core/cudnn"]
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
+cli = ["dep:rodio", "dep:crossterm", "dep:tracing-subscriber"]
+
+[[example]]
+name = "stream_cli"
+required-features = ["cli"]

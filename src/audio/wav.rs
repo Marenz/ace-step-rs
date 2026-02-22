@@ -60,6 +60,57 @@ pub fn peak_normalize(samples: &mut [f32]) {
     }
 }
 
+/// Equal-power crossfade between the tail of `prev` and the head of `next`.
+///
+/// `crossfade_samples` is the number of *per-channel* samples to crossfade.
+/// For stereo interleaved audio, the actual number of f32 values affected is
+/// `crossfade_samples * channels`.
+///
+/// Returns the merged audio: `prev[..overlap_start] ++ blended ++ next[overlap_end..]`.
+/// Both inputs must be interleaved with the same channel count.
+pub fn crossfade(prev: &[f32], next: &[f32], crossfade_samples: usize, channels: u16) -> Vec<f32> {
+    let ch = channels as usize;
+    let fade_frames = crossfade_samples; // per-channel frames to crossfade
+    let fade_values = fade_frames * ch; // total interleaved values in crossfade zone
+
+    // If either buffer is too short for the crossfade, just concatenate.
+    if prev.len() < fade_values || next.len() < fade_values || fade_frames == 0 {
+        let mut out = Vec::with_capacity(prev.len() + next.len());
+        out.extend_from_slice(prev);
+        out.extend_from_slice(next);
+        return out;
+    }
+
+    let prev_keep = prev.len() - fade_values;
+    let next_skip = fade_values;
+
+    let mut out = Vec::with_capacity(prev_keep + fade_values + (next.len() - next_skip));
+
+    // Copy non-overlapping prefix from prev
+    out.extend_from_slice(&prev[..prev_keep]);
+
+    // Equal-power crossfade in the overlap zone
+    let prev_tail = &prev[prev_keep..];
+    let next_head = &next[..fade_values];
+
+    for i in 0..fade_frames {
+        // Linear position in [0, 1]
+        let t = (i as f64 + 0.5) / fade_frames as f64;
+        // Equal-power gains: at t=0, prev=1/next=0; at t=1, prev=0/next=1
+        let gain_prev = (t * std::f64::consts::FRAC_PI_2).cos() as f32;
+        let gain_next = (t * std::f64::consts::FRAC_PI_2).sin() as f32;
+        for c in 0..ch {
+            let idx = i * ch + c;
+            out.push(prev_tail[idx] * gain_prev + next_head[idx] * gain_next);
+        }
+    }
+
+    // Copy non-overlapping suffix from next
+    out.extend_from_slice(&next[next_skip..]);
+
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,6 +121,73 @@ mod tests {
         peak_normalize(&mut samples);
         assert!((samples[0] - 1.0).abs() < 1e-6);
         assert!((samples[1] - (-0.5)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn test_crossfade_equal_power() {
+        // Mono: prev = [1.0; 200], next = [0.0; 200], crossfade 100 samples
+        let prev = vec![1.0f32; 200];
+        let next = vec![0.0f32; 200];
+        let result = crossfade(&prev, &next, 100, 1);
+        // Output length: (200-100) + 100 + (200-100) = 300
+        assert_eq!(result.len(), 300);
+        // First 100 samples should be untouched prev
+        for &s in &result[..100] {
+            assert_eq!(s, 1.0);
+        }
+        // Last 100 samples should be untouched next
+        for &s in &result[200..] {
+            assert_eq!(s, 0.0);
+        }
+        // First crossfade sample (t≈0) should be very close to 1.0 (prev)
+        assert!(
+            result[100] > 0.95,
+            "first fade sample {} not near 1.0",
+            result[100]
+        );
+        // Last crossfade sample (t≈1) should be very close to 0.0 (next)
+        assert!(
+            result[199] < 0.05,
+            "last fade sample {} not near 0.0",
+            result[199]
+        );
+        // Middle of crossfade: cos(π/4) ≈ 0.707 (equal-power mid-point)
+        let mid = result[150];
+        assert!(
+            (mid - 0.707).abs() < 0.05,
+            "mid-fade sample {} not near 0.707",
+            mid
+        );
+        // Crossfade should be monotonically decreasing
+        for i in 100..199 {
+            assert!(
+                result[i] >= result[i + 1] - 0.001,
+                "non-monotonic at {i}: {} < {}",
+                result[i],
+                result[i + 1]
+            );
+        }
+    }
+
+    #[test]
+    fn test_crossfade_stereo() {
+        // Stereo interleaved: 8 frames = 16 values per buffer
+        let prev = vec![1.0f32; 16]; // 8 stereo frames
+        let next = vec![0.0f32; 16];
+        let result = crossfade(&prev, &next, 4, 2); // 4-frame crossfade
+                                                    // (16-8) + 8 + (16-8) = 24
+        assert_eq!(result.len(), 24);
+    }
+
+    #[test]
+    fn test_crossfade_too_short() {
+        // If buffers are shorter than crossfade, should just concatenate
+        let prev = vec![1.0f32; 3];
+        let next = vec![0.5f32; 3];
+        let result = crossfade(&prev, &next, 10, 1);
+        assert_eq!(result.len(), 6);
+        assert_eq!(&result[..3], &[1.0; 3]);
+        assert_eq!(&result[3..], &[0.5; 3]);
     }
 
     #[test]

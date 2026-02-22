@@ -29,6 +29,7 @@ fn main() -> ace_step_rs::Result<()> {
         duration_s,
         shift: 3.0,
         seed: Some(1337),
+        ..Default::default()
     };
 
     let audio = pipeline.generate(&params)?;

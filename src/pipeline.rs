@@ -15,6 +15,7 @@ use hf_hub::api::sync::Api;
 use tokenizers::Tokenizer;
 
 use crate::config::{AceStepConfig, VaeConfig};
+pub use crate::model::encoder::text::format_metas;
 use crate::model::encoder::text::{self, Qwen3TextEncoder};
 use crate::model::generation::AceStepConditionGenerationModel;
 use crate::vae::OobleckDecoder;
@@ -75,6 +76,17 @@ pub struct GenerationParams {
     pub shift: f64,
     /// Random seed. None = random.
     pub seed: Option<u64>,
+    /// Custom src_latents [1, T, 64] — overrides default silence latent.
+    /// When set, chunk_masks must also be set, and duration_s is ignored
+    /// (T is inferred from the tensor).
+    pub src_latents: Option<Tensor>,
+    /// Custom chunk_masks [1, T, 64] — 1.0 = generate, 0.0 = keep from src_latents.
+    pub chunk_masks: Option<Tensor>,
+    /// Custom timbre reference latents [N, 750, 64].
+    /// When None, uses silence (no timbre conditioning).
+    pub refer_audio: Option<Tensor>,
+    /// Batch assignment for timbre references [N].
+    pub refer_order: Option<Tensor>,
 }
 
 impl Default for GenerationParams {
@@ -87,6 +99,10 @@ impl Default for GenerationParams {
             duration_s: 30.0,
             shift: 3.0,
             seed: None,
+            src_latents: None,
+            chunk_masks: None,
+            refer_audio: None,
+            refer_order: None,
         }
     }
 }
@@ -238,7 +254,32 @@ impl AceStepPipeline {
         })
     }
 
-    // --- Accessor methods for step-by-step comparison ---
+    // --- Accessor methods ---
+
+    /// Access the silence latent tensor [1, 15000, 64].
+    pub fn silence_latent(&self) -> &Tensor {
+        &self.silence_latent
+    }
+
+    /// The model config.
+    pub fn config(&self) -> &AceStepConfig {
+        &self.cfg
+    }
+
+    /// The device this pipeline runs on.
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+
+    /// The dtype used for model weights and computation.
+    pub fn dtype(&self) -> DType {
+        self.dtype
+    }
+
+    /// Access the tokenizer.
+    pub fn tokenizer(&self) -> &Tokenizer {
+        &self.tokenizer
+    }
 
     /// Encode text caption through Qwen3.
     pub fn encode_text(&mut self, caption_ids: &Tensor) -> Result<Tensor> {
@@ -248,11 +289,6 @@ impl AceStepPipeline {
     /// Get lyric token embeddings from Qwen3.
     pub fn embed_lyrics(&mut self, lyric_ids: &Tensor) -> Result<Tensor> {
         Ok(self.text_encoder.embed_lyrics(lyric_ids)?)
-    }
-
-    /// Access the silence latent tensor [1, 15000, 64].
-    pub fn silence_latent(&self) -> &Tensor {
-        &self.silence_latent
     }
 
     /// Run the condition encoder (text + lyrics + timbre → packed sequence).
@@ -293,6 +329,58 @@ impl AceStepPipeline {
     /// Uses tiled decode for long sequences.
     pub fn vae_decode(&self, latents: &Tensor) -> Result<Tensor> {
         Ok(self.vae.tiled_decode(latents, 256, 16)?)
+    }
+
+    /// Tokenize and encode a caption string, returning (hidden_states, mask).
+    /// Both tensors have batch dim 1.
+    pub fn tokenize_and_encode_caption(
+        &mut self,
+        caption: &str,
+        metas: &str,
+    ) -> Result<(Tensor, Tensor)> {
+        let prompt = text::format_caption_prompt(caption, metas);
+        let encoding = self
+            .tokenizer
+            .encode(prompt, true)
+            .map_err(|e| Error::Tokenizer(crate::error::TokenizerError(e.to_string())))?;
+        let ids: Vec<u32> = encoding.get_ids().to_vec();
+        let mask: Vec<f32> = encoding
+            .get_attention_mask()
+            .iter()
+            .map(|&m| m as f32)
+            .collect();
+        let ids_t = Tensor::new(&ids[..], &self.device)?.unsqueeze(0)?;
+        let mask_t = Tensor::new(&mask[..], &self.device)?
+            .unsqueeze(0)?
+            .to_dtype(self.dtype)?;
+        let hidden = self.text_encoder.encode_text(&ids_t)?;
+        Ok((hidden, mask_t))
+    }
+
+    /// Tokenize and embed lyrics, returning (hidden_states, mask).
+    /// Both tensors have batch dim 1.
+    pub fn tokenize_and_embed_lyrics(
+        &mut self,
+        lyrics: &str,
+        language: &str,
+    ) -> Result<(Tensor, Tensor)> {
+        let prompt = text::format_lyric_prompt(lyrics, language);
+        let encoding = self
+            .tokenizer
+            .encode(prompt, true)
+            .map_err(|e| Error::Tokenizer(crate::error::TokenizerError(e.to_string())))?;
+        let ids: Vec<u32> = encoding.get_ids().to_vec();
+        let mask: Vec<f32> = encoding
+            .get_attention_mask()
+            .iter()
+            .map(|&m| m as f32)
+            .collect();
+        let ids_t = Tensor::new(&ids[..], &self.device)?.unsqueeze(0)?;
+        let mask_t = Tensor::new(&mask[..], &self.device)?
+            .unsqueeze(0)?
+            .to_dtype(self.dtype)?;
+        let hidden = self.text_encoder.embed_lyrics(&ids_t)?;
+        Ok((hidden, mask_t))
     }
 
     /// Generate audio from text and lyrics.
@@ -340,24 +428,33 @@ impl AceStepPipeline {
         // 4. Get lyric embeddings (raw token embeddings, NOT full encoder)
         let lyric_hidden = self.text_encoder.embed_lyrics(&lyric_tensor)?;
 
-        // 5. Compute sequence length from duration
-        // 25Hz acoustic rate, so T = duration_s * 25
-        let t = (params.duration_s * 25.0) as usize;
-
-        // 6. Use silence_latent for src_latents (NOT zeros — critical for correct output).
-        // Python: src_latents = silence_latent[:, :latent_length, :]
+        // 5. Compute sequence length from duration, or infer from custom src_latents.
         let acoustic_dim = self.cfg.audio_acoustic_hidden_dim;
-        let src_latents = self.silence_latent.i((.., ..t, ..))?.contiguous()?;
-        // chunk_masks = all-ones [B, T] → expanded to [B, T, 64]
-        let chunk_masks = Tensor::ones((1, t, acoustic_dim), self.dtype, &self.device)?;
 
-        // 7. Use silence_latent[:, :750, :] for timbre (no reference audio in text2music).
-        // Python: silence_latent[:, :750, :] when refer_audio is all zeros.
-        let refer_audio = self
-            .silence_latent
-            .i((.., ..self.cfg.timbre_fix_frame, ..))?
-            .contiguous()?;
-        let refer_order = Tensor::zeros((1,), DType::I64, &self.device)?;
+        let (src_latents, chunk_masks) =
+            if let (Some(sl), Some(cm)) = (&params.src_latents, &params.chunk_masks) {
+                (sl.clone(), cm.clone())
+            } else {
+                // Default: silence src_latents + all-ones chunk_masks (text2music).
+                let t = (params.duration_s * 25.0) as usize;
+                let src = self.silence_latent.i((.., ..t, ..))?.contiguous()?;
+                let masks = Tensor::ones((1, t, acoustic_dim), self.dtype, &self.device)?;
+                (src, masks)
+            };
+        let t = src_latents.dim(1)?;
+
+        // 6. Timbre reference — custom or default silence.
+        let (refer_audio, refer_order) =
+            if let (Some(ra), Some(ro)) = (&params.refer_audio, &params.refer_order) {
+                (ra.clone(), ro.clone())
+            } else {
+                let ra = self
+                    .silence_latent
+                    .i((.., ..self.cfg.timbre_fix_frame, ..))?
+                    .contiguous()?;
+                let ro = Tensor::zeros((1,), DType::I64, &self.device)?;
+                (ra, ro)
+            };
 
         // 8. Generate latents via diffusion
         let t2 = Instant::now();

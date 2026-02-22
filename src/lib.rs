@@ -24,6 +24,7 @@ pub mod audio;
 pub mod config;
 pub mod model;
 pub mod pipeline;
+pub mod streaming;
 pub mod vae;
 
 mod error;

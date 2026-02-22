@@ -4,4 +4,4 @@
 
 mod wav;
 
-pub use wav::{read_wav, write_wav};
+pub use wav::{crossfade, read_wav, write_wav};
