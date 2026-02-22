@@ -722,7 +722,7 @@ fn run() -> ace_step_rs::Result<()> {
         OutputStream::try_default().expect("failed to open audio output");
     let sink = Sink::try_new(&stream_handle).expect("failed to create audio sink");
 
-    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(3);
+    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(1);
     let source = ChannelSource::new(audio_rx, 2, 48000, playback_counter);
     sink.append(source);
 

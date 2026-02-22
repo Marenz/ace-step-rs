@@ -716,9 +716,9 @@ fn main() {
     // Channels
     let (cmd_tx, cmd_rx) = mpsc::channel::<GenCmd>();
     let (event_tx, event_rx) = mpsc::channel::<GenEvent>();
-    // 3-chunk buffer: ~66s ahead of playback. Generator blocks when full,
-    // keeping memory bounded and captions changes responsive.
-    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(3);
+    // 1-chunk buffer: generator stays exactly one chunk ahead of playback,
+    // so caption/lyrics changes take effect on the very next chunk.
+    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(1);
 
     // Audio output
     let playback_consumed = Arc::new(AtomicUsize::new(0));
