@@ -186,17 +186,45 @@ pub struct AceStepPipeline {
     cfg: AceStepConfig,
     device: Device,
     dtype: DType,
+    /// Cached paths for reloading on a different device (e.g. CPU fallback).
+    paths: ModelPaths,
 }
 
 impl AceStepPipeline {
     /// Load the pipeline, downloading model weights from HuggingFace if needed.
     pub fn load(device: &Device, dtype: DType) -> Result<Self> {
         let paths = download_models()?;
-        Self::load_from_paths(&paths, device, dtype)
+        Self::load_from_paths(paths, device, dtype)
     }
 
-    /// Load from pre-downloaded model files.
-    fn load_from_paths(paths: &ModelPaths, device: &Device, dtype: DType) -> Result<Self> {
+    /// Reload the pipeline on a different device.
+    ///
+    /// Uses the cached HF paths (already on disk) so no network I/O is needed.
+    /// Intended for CPU fallback after a CUDA OOM.
+    pub fn reload_on_device(self, device: &Device) -> Result<Self> {
+        let Self {
+            dtype,
+            paths,
+            // Destructure everything so all GPU tensors are dropped before
+            // we allocate on the new device.
+            tokenizer: _,
+            text_encoder: _,
+            generation_model: _,
+            vae: _,
+            silence_latent: _,
+            cfg: _,
+            device: _,
+        } = self;
+        Self::load_from_paths(paths, device, dtype)
+    }
+
+    /// The device this pipeline is currently loaded on.
+    pub fn device(&self) -> &Device {
+        &self.device
+    }
+
+    /// Load from pre-downloaded model files (takes ownership to store for later reload).
+    fn load_from_paths(paths: ModelPaths, device: &Device, dtype: DType) -> Result<Self> {
         // Enable TF32 tensor-core math for F32 matmuls on Ampere+ GPUs.
         // Same tradeoff PyTorch makes by default (10-bit mantissa vs 23-bit).
         #[cfg(feature = "cuda")]
@@ -251,6 +279,7 @@ impl AceStepPipeline {
             cfg,
             device: device.clone(),
             dtype,
+            paths,
         })
     }
 
@@ -264,11 +293,6 @@ impl AceStepPipeline {
     /// The model config.
     pub fn config(&self) -> &AceStepConfig {
         &self.cfg
-    }
-
-    /// The device this pipeline runs on.
-    pub fn device(&self) -> &Device {
-        &self.device
     }
 
     /// The dtype used for model weights and computation.
@@ -404,8 +428,9 @@ impl AceStepPipeline {
         let caption_tensor = Tensor::new(&caption_ids[..], &self.device)?.unsqueeze(0)?;
         let caption_mask_tensor = Tensor::new(&caption_mask[..], &self.device)?.unsqueeze(0)?;
 
-        // 2. Encode caption through Qwen3
+        // 2. Encode caption through Qwen3 (clear KV cache from any prior call)
         let t1 = Instant::now();
+        self.text_encoder.clear_kv_cache();
         let text_hidden = self.text_encoder.encode_text(&caption_tensor)?;
         tracing::info!("Text encoding: {:.2}s", t1.elapsed().as_secs_f64());
 
