@@ -111,7 +111,8 @@ impl Source for ChannelSource {
 // ── Messages ─────────────────────────────────────────────────────────────
 
 enum GenCmd {
-    Generate(Option<ChunkRequest>),
+    /// Override fields for the next chunk (caption, lyrics, seed, etc.)
+    Override(ChunkRequest),
     Config(ConfigUpdate),
     Rate(usize, String),
     Quit,
@@ -286,10 +287,10 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
                 "caption" => {
                     st.caption = value.clone();
                     cmd_tx
-                        .send(GenCmd::Generate(Some(ChunkRequest {
+                        .send(GenCmd::Override(ChunkRequest {
                             caption: Some(value.clone()),
                             ..Default::default()
-                        })))
+                        }))
                         .ok();
                     format!(
                         "event:ok caption updated: {}",
@@ -300,30 +301,30 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
                     let lyrics = value.replace("\\n", "\n");
                     st.lyrics = lyrics.clone();
                     cmd_tx
-                        .send(GenCmd::Generate(Some(ChunkRequest {
+                        .send(GenCmd::Override(ChunkRequest {
                             lyrics: Some(lyrics),
                             ..Default::default()
-                        })))
+                        }))
                         .ok();
                     "event:ok lyrics updated".to_string()
                 }
                 "lang" => {
                     st.language = value.clone();
                     cmd_tx
-                        .send(GenCmd::Generate(Some(ChunkRequest {
+                        .send(GenCmd::Override(ChunkRequest {
                             language: Some(value.clone()),
                             ..Default::default()
-                        })))
+                        }))
                         .ok();
                     format!("event:ok lang={value}")
                 }
                 "seed" => {
                     if let Ok(s) = value.parse::<u64>() {
                         cmd_tx
-                            .send(GenCmd::Generate(Some(ChunkRequest {
+                            .send(GenCmd::Override(ChunkRequest {
                                 seed: Some(s),
                                 ..Default::default()
-                            })))
+                            }))
                             .ok();
                         format!("event:ok seed={s}")
                     } else {
@@ -559,70 +560,77 @@ fn generator_thread(
             return;
         }
 
-        let mut pending_request: Option<Option<ChunkRequest>> = None;
-        let mut should_quit = false;
+        // Drain all pending commands, accumulating any override request
+        let mut override_req = ChunkRequest::default();
+        let mut has_override = false;
 
-        match cmd_rx.try_recv() {
-            Ok(GenCmd::Quit) => return,
-            Ok(GenCmd::Config(upd)) => apply_config_update(streamer.config_mut(), &upd),
-            Ok(GenCmd::Generate(req)) => pending_request = Some(req),
-            Ok(GenCmd::Rate(idx, rating)) => streamer.rate_chunk(idx, &rating),
-            Err(_) => {}
-        }
-        while let Ok(cmd) = cmd_rx.try_recv() {
-            match cmd {
-                GenCmd::Quit => {
-                    should_quit = true;
-                    break;
+        loop {
+            match cmd_rx.try_recv() {
+                Ok(GenCmd::Quit) => return,
+                Ok(GenCmd::Config(upd)) => apply_config_update(streamer.config_mut(), &upd),
+                Ok(GenCmd::Override(req)) => {
+                    // Merge: last write wins per field
+                    if req.caption.is_some() {
+                        override_req.caption = req.caption;
+                    }
+                    if req.metas.is_some() {
+                        override_req.metas = req.metas;
+                    }
+                    if req.lyrics.is_some() {
+                        override_req.lyrics = req.lyrics;
+                    }
+                    if req.language.is_some() {
+                        override_req.language = req.language;
+                    }
+                    if req.seed.is_some() {
+                        override_req.seed = req.seed;
+                    }
+                    has_override = true;
                 }
-                GenCmd::Config(upd) => apply_config_update(streamer.config_mut(), &upd),
-                GenCmd::Generate(req) => pending_request = Some(req),
-                GenCmd::Rate(idx, rating) => streamer.rate_chunk(idx, &rating),
+                Ok(GenCmd::Rate(idx, rating)) => streamer.rate_chunk(idx, &rating),
+                Err(_) => break,
             }
         }
-        if should_quit {
-            return;
-        }
 
-        if pending_request.is_none() {
-            thread::sleep(std::time::Duration::from_millis(10));
-        }
+        let req = if has_override {
+            Some(override_req)
+        } else {
+            None
+        };
 
-        if let Some(req) = pending_request {
-            let chunk_idx = streamer.chunks_generated();
-            event_tx
-                .send(GenEvent::Generating {
-                    chunk_index: chunk_idx,
-                })
-                .ok();
+        let chunk_idx = streamer.chunks_generated();
+        event_tx
+            .send(GenEvent::Generating {
+                chunk_index: chunk_idx,
+            })
+            .ok();
 
-            let t0 = std::time::Instant::now();
-            match streamer.next_chunk(&mut pipeline, req) {
-                Ok(chunk) => {
-                    let gen_time = t0.elapsed().as_secs_f64();
-                    let audio_samples = chunk.audio.samples.len();
-                    if audio_tx.send(chunk.audio.samples).is_err() {
-                        return;
-                    }
-                    event_tx
-                        .send(GenEvent::Chunk {
-                            chunk_index: chunk.chunk_index,
-                            audio_samples,
-                            gen_time_s: gen_time,
-                            caption: streamer.caption().to_string(),
-                            metas: streamer.metas().to_string(),
-                            lyrics: streamer.lyrics().to_string(),
-                            language: streamer.language().to_string(),
-                            config: streamer.config().clone(),
-                        })
-                        .ok();
-                }
-                Err(e) => {
-                    event_tx
-                        .send(GenEvent::Error(format!("Generation: {e}")))
-                        .ok();
+        let t0 = std::time::Instant::now();
+        match streamer.next_chunk(&mut pipeline, req) {
+            Ok(chunk) => {
+                let gen_time = t0.elapsed().as_secs_f64();
+                let audio_samples = chunk.audio.samples.len();
+                if audio_tx.send(chunk.audio.samples).is_err() {
                     return;
                 }
+                event_tx
+                    .send(GenEvent::Chunk {
+                        chunk_index: chunk.chunk_index,
+                        audio_samples,
+                        gen_time_s: gen_time,
+                        caption: streamer.caption().to_string(),
+                        metas: streamer.metas().to_string(),
+                        lyrics: streamer.lyrics().to_string(),
+                        language: streamer.language().to_string(),
+                        config: streamer.config().clone(),
+                    })
+                    .ok();
+            }
+            Err(e) => {
+                event_tx
+                    .send(GenEvent::Error(format!("Generation: {e}")))
+                    .ok();
+                return;
             }
         }
     }
@@ -742,7 +750,6 @@ fn main() {
             eprintln!("Pipeline ready. Generating first chunk...");
             tracing::info!("Pipeline ready");
             broadcast(&clients, "event:ready");
-            cmd_tx.send(GenCmd::Generate(None)).ok();
         }
         Ok(GenEvent::Error(e)) => {
             eprintln!("Error: {e}");
@@ -792,9 +799,6 @@ fn main() {
                 eprintln!("{msg}");
                 tracing::info!("{msg}");
                 broadcast(&clients, &msg);
-
-                // Schedule next chunk
-                cmd_tx.send(GenCmd::Generate(None)).ok();
             }
             Ok(GenEvent::Error(e)) => {
                 let msg = format!("event:error {e}");
