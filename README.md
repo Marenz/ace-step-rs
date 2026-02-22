@@ -112,6 +112,10 @@ For cuDNN-accelerated ConvTranspose1d (faster VAE decode):
 cargo build --release --features cudnn
 ```
 
+Requires a [candle fork](https://github.com/Marenz/candle/tree/fast-conv-transpose1d-no-cudnn) with two upstream PRs:
+- [cuDNN ConvTranspose1d](https://github.com/huggingface/candle/pull/3383) — 100x faster VAE decode vs the default CPU fallback kernel
+- [public `Model::clear_kv_cache` for Qwen3](https://github.com/huggingface/candle/pull/3381) — needed to reset KV state between inference calls
+
 Depending on your system, you may need additional environment variables for the CUDA build — see [AGENTS.md](AGENTS.md) for platform-specific notes.
 
 ### Metal (macOS)
@@ -157,7 +161,7 @@ cargo build --release --bin generation-daemon --features cuda,audio-ogg
 
 ## Performance
 
-Benchmarked on RTX 3090 (24GB), F32 + TF32 tensor cores. Uses a local candle patch adding cuDNN ConvTranspose1d.
+Benchmarked on RTX 3090 (24GB), F32 + TF32 tensor cores. Uses the [cuDNN ConvTranspose1d patch](https://github.com/huggingface/candle/pull/3383).
 
 | Duration | Python (PyTorch) | Rust (candle) | Ratio |
 |----------|-----------------|---------------|-------|
@@ -176,7 +180,7 @@ Benchmarked on RTX 3090 (24GB), F32 + TF32 tensor cores. Uses a local candle pat
 
 </details>
 
-Rust wins at short/medium durations. At longer durations PyTorch's Cutlass tensor-core VAE kernels (cuDNN v9 engine API) give it an edge. Without the candle patch, VAE decode is ~3s (100x slower ConvTranspose1d).
+Rust wins at short/medium durations. At longer durations PyTorch's Cutlass tensor-core VAE kernels (cuDNN v9 engine API) give it an edge. Without the [candle patch](https://github.com/huggingface/candle/pull/3383), VAE decode is ~3s (100x slower ConvTranspose1d).
 
 ## Running Tests
 
