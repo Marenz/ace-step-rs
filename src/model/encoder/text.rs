@@ -83,6 +83,11 @@ impl Qwen3TextEncoder {
         self.embed_tokens.forward(token_ids)
     }
 
+    /// Clear the KV cache. Must be called between independent forward passes.
+    pub fn clear_kv_cache(&mut self) {
+        self.model.clear_kv_cache();
+    }
+
     /// Get the Qwen3 hidden dimension (1024 for Qwen3-Embedding-0.6B).
     pub fn hidden_size(&self) -> usize {
         self.embed_tokens.embeddings().dim(1).unwrap_or(1024)

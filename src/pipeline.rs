@@ -345,8 +345,9 @@ impl AceStepPipeline {
         let caption_tensor = Tensor::new(&caption_ids[..], &self.device)?.unsqueeze(0)?;
         let caption_mask_tensor = Tensor::new(&caption_mask[..], &self.device)?.unsqueeze(0)?;
 
-        // 2. Encode caption through Qwen3
+        // 2. Encode caption through Qwen3 (clear KV cache from any prior call)
         let t1 = Instant::now();
+        self.text_encoder.clear_kv_cache();
         let text_hidden = self.text_encoder.encode_text(&caption_tensor)?;
         tracing::info!("Text encoding: {:.2}s", t1.elapsed().as_secs_f64());
 
