@@ -575,6 +575,16 @@ impl StreamingGenerator {
     pub fn config_mut(&mut self) -> &mut StreamConfig {
         &mut self.config
     }
+
+    /// Reset generator state so the next chunk starts fresh (no overlap context).
+    /// Caption/lyrics/config are preserved; only the latent history is cleared.
+    pub fn restart(&mut self) {
+        self.prev_latents = None;
+        self.prev_latent_frames = 0;
+        self.prev_audio_tail = None;
+        self.chunk_index = 0;
+        tracing::info!("StreamingGenerator: restarted (latent history cleared)");
+    }
 }
 
 /// Generate audio AND return the raw diffusion latents [1, T, 64].

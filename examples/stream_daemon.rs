@@ -219,6 +219,7 @@ enum ParsedCmd {
     Set(String, String),
     Rate(String),
     StateQuery,
+    Restart,
     Quit,
     Unknown(String),
 }
@@ -241,6 +242,7 @@ fn parse_cmd(line: &str) -> ParsedCmd {
         "toggle" if parts.len() >= 2 => ParsedCmd::Toggle(parts[1].to_lowercase()),
         "set" if parts.len() >= 3 => ParsedCmd::Set(parts[1].to_lowercase(), parts[2].to_string()),
         "state" => ParsedCmd::StateQuery,
+        "restart" => ParsedCmd::Restart,
         "quit" | "q" | "exit" => ParsedCmd::Quit,
         _ => {
             // Free-form text → caption update
@@ -397,6 +399,8 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
             Some(st.state_line())
         }
 
+        ParsedCmd::Restart => Some("event:restart".to_string()),
+
         ParsedCmd::Quit => None,
 
         ParsedCmd::Unknown(s) if s.is_empty() => Some(String::new()),
@@ -460,12 +464,29 @@ fn handle_client(
         };
         tracing::info!("socket cmd: {:?}", line);
         match process_cmd(&line, &cmd_tx, &state) {
+            Some(ack) if ack == "event:restart" => {
+                broadcast(&clients, "event:restarting");
+                quit_flag.store(true, Ordering::Relaxed);
+                cmd_tx.send(GenCmd::Quit).ok();
+                let exe = std::env::current_exe().expect("current_exe");
+                let args: Vec<String> = std::env::args().skip(1).collect();
+                tracing::info!("Restarting: {:?} {:?}", exe, args);
+                thread::spawn(move || {
+                    thread::sleep(std::time::Duration::from_millis(500));
+                    std::process::Command::new(exe)
+                        .args(args)
+                        .spawn()
+                        .expect("re-exec failed");
+                    std::process::exit(0);
+                });
+                break;
+            }
             Some(ack) => {
                 event_tx.send(ack).ok();
             }
             None => {
                 // Quit command
-                event_tx.send("event:ok shutting down".to_string()).ok();
+                broadcast(&clients, "event:ok shutting down");
                 quit_flag.store(true, Ordering::Relaxed);
                 cmd_tx.send(GenCmd::Quit).ok();
                 break;
