@@ -47,7 +47,7 @@ num-traits = "0.2"
 zip = "2"
 
 # Async runtime (GenerationManager uses tokio channels + spawn_blocking)
-tokio = { version = "1", features = ["rt", "sync", "macros"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros", "net", "io-util"] }
 
 # CLI argument parsing (binary only)
 clap = { version = "4", features = ["derive"] }
@@ -88,3 +88,6 @@ required-features = ["cli"]
 [[example]]
 name = "stream_daemon"
 required-features = ["cli"]
+
+[[example]]
+name = "generation_daemon"

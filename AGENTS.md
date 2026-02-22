@@ -146,6 +146,34 @@ Module roots (e.g., `src/audio.rs`) contain `mod` declarations and re-exports. N
 - Turbo: 8 steps CFG-free, pre-defined timestep schedules
 - Max duration: 10 min
 
+## Spacebot Integration (generation_daemon)
+
+`examples/generation_daemon.rs` is the primary integration point with spacebot.
+
+**What it does:** Keeps the pipeline resident in VRAM across requests. Each client connection sends one JSON request line over a Unix socket and receives one JSON response line.
+
+**Socket:** `/tmp/ace-step-gen.sock` (default). Override with `--socket`.
+
+**Protocol:**
+- Request: `{"caption":"...", "output":"/tmp/out.ogg", "duration_s":30, ...}` + newline
+- Response success: `{"ok":true, "path":"...", "duration_s":30, "sample_rate":48000, "channels":2}` + newline
+- Response error: `{"ok":false, "error":"..."}` + newline
+
+**Build:**
+```bash
+LIBRARY_PATH=/usr/lib64:$LIBRARY_PATH PATH="/usr/local/cuda-12.4/bin:$PATH" \
+CUDA_HOME=/usr/local/cuda-12.4 NVCC_CCBIN=/usr/bin/g++-13 CPLUS_INCLUDE_PATH="/tmp/cuda-shim" \
+cargo build --release --example generation_daemon --features audio-ogg
+```
+
+**Binary location:** `target/release/examples/generation_daemon`
+
+**Systemd unit:** `~/.config/systemd/user/ace-step-gen.service` (enabled, auto-starts)
+
+**Skill:** `~/.spacebot/skills/generate_music/SKILL.md` — instructs the worker to talk to the daemon socket via `socat`, with CLI binary fallback.
+
+**Design rationale:** `stream_daemon` (also in this repo) is for live/continuous playback to speakers. `generation_daemon` is for one-shot file generation: user asks for a track, gets a file. The `GenerationManager` (`src/manager.rs`) handles the resident pipeline with OOM retry; `generation_daemon` just wraps it with a socket interface.
+
 ## Reference Repositories
 
 - `~/repos/ACE-Step-1.5/` — Python v1.5 implementation (ground truth)
