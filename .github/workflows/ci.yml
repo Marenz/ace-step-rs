@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CANDLE_REV: fast-conv-transpose1d-no-cudnn
 
 jobs:
   fmt:
@@ -28,9 +29,9 @@ jobs:
 
       - name: Patch candle deps for CI
         run: |
-          sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
-          sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
-          sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
+          sed -i "s|candle-core = { path = \"[^\"]*\" }|candle-core = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
+          sed -i "s|candle-nn = { path = \"[^\"]*\" }|candle-nn = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
+          sed -i "s|candle-transformers = { path = \"[^\"]*\" }|candle-transformers = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
 
       - run: cargo build --no-default-features
 
@@ -44,9 +45,9 @@ jobs:
 
       - name: Patch candle deps for CI
         run: |
-          sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
-          sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
-          sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
+          sed -i "s|candle-core = { path = \"[^\"]*\" }|candle-core = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
+          sed -i "s|candle-nn = { path = \"[^\"]*\" }|candle-nn = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
+          sed -i "s|candle-transformers = { path = \"[^\"]*\" }|candle-transformers = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
 
       - run: cargo test --no-default-features
 
@@ -60,8 +61,8 @@ jobs:
 
       - name: Patch candle deps for CI
         run: |
-          sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
-          sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
-          sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
+          sed -i "s|candle-core = { path = \"[^\"]*\" }|candle-core = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
+          sed -i "s|candle-nn = { path = \"[^\"]*\" }|candle-nn = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
+          sed -i "s|candle-transformers = { path = \"[^\"]*\" }|candle-transformers = { git = \"https://github.com/Marenz/candle.git\", branch = \"$CANDLE_REV\" }|" Cargo.toml
 
       - run: cargo clippy --no-default-features -- -D warnings
