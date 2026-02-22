@@ -1,17 +1,25 @@
 //! Example: generate a short audio clip with ACE-Step v1.5.
 //!
-//! Usage: cargo run --release --example generate [-- <duration_seconds>]
+//! Usage: cargo run --release --example generate [-- <duration_seconds> [output_format]]
+//!
+//! output_format: wav (default), ogg
 
+use ace_step_rs::audio::{write_audio, AudioFormat};
 use ace_step_rs::pipeline::{AceStepPipeline, GenerationParams};
 
 fn main() -> ace_step_rs::Result<()> {
     // Initialize logging
     tracing_subscriber::fmt::init();
 
-    let duration_s: f64 = std::env::args()
-        .nth(1)
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(30.0);
+    let args: Vec<String> = std::env::args().collect();
+    let duration_s: f64 = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(30.0);
+
+    let format = args
+        .get(2)
+        .and_then(|s| AudioFormat::from_str(s))
+        .unwrap_or(AudioFormat::Wav);
+
+    let output_path = format!("output.{}", format.extension());
 
     let device = candle_core::Device::cuda_if_available(0)?;
     let dtype = candle_core::DType::F32;
@@ -40,10 +48,9 @@ fn main() -> ace_step_rs::Result<()> {
         audio.channels
     );
 
-    // Save to WAV
-    let output_path = "output.wav";
-    ace_step_rs::audio::write_wav(
-        output_path,
+    // Save to audio file (format detected from extension)
+    write_audio(
+        &output_path,
         &audio.samples,
         audio.sample_rate,
         audio.channels,
