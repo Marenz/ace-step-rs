@@ -601,7 +601,10 @@ fn generator_thread(
                 Ok(chunk) => {
                     let gen_time = t0.elapsed().as_secs_f64();
                     let audio_samples = chunk.audio.samples.len();
-                    if audio_tx.try_send(chunk.audio.samples).is_err() {
+                    // Blocking send — waits for the sink to consume the previous chunk.
+                    // This is intentional: generation runs ~25x faster than playback,
+                    // so we let the sink pace us.
+                    if audio_tx.send(chunk.audio.samples).is_err() {
                         return;
                     }
                     event_tx

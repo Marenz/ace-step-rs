@@ -599,7 +599,8 @@ fn generator_thread(
                     let gen_time = t0.elapsed().as_secs_f64();
                     let audio_samples = chunk.audio.samples.len();
 
-                    if audio_tx.try_send(chunk.audio.samples).is_err() {
+                    // Blocking send — waits for the sink to consume the previous chunk.
+                    if audio_tx.send(chunk.audio.samples).is_err() {
                         return;
                     }
 
