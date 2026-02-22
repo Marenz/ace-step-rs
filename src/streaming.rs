@@ -46,6 +46,11 @@ pub struct StreamConfig {
     /// Default language for lyrics. Default: "en".
     pub language: String,
 
+    /// Total planned duration of the full track in seconds. Default: 0 (chunk duration only).
+    /// When > 0, the model generates for this full duration but we only output the new portion.
+    /// This lets the model plan structure (intro/verse/chorus) for the entire track.
+    pub total_duration_s: f64,
+
     // --- Feature toggles (for debugging / A-B testing) ---
     /// Use overlap repaint: carry previous latents as src_latents context.
     /// When false, each chunk is generated independently (no continuity).
@@ -56,6 +61,9 @@ pub struct StreamConfig {
     /// Use audio-domain crossfade at chunk boundaries.
     /// When false, chunks are hard-concatenated (after trimming overlap).
     pub use_crossfade: bool,
+    /// Auto-increment seed for each chunk to get more variation.
+    /// When true, each chunk gets a different random seed.
+    pub auto_seed: bool,
 }
 
 impl Default for StreamConfig {
@@ -66,9 +74,11 @@ impl Default for StreamConfig {
             crossfade_ms: 100,
             shift: 3.0,
             language: "en".to_string(),
+            total_duration_s: 0.0,
             use_overlap: true,
             use_timbre_from_prev: true,
             use_crossfade: false,
+            auto_seed: true, // Changed to true for variety
         }
     }
 }
@@ -124,6 +134,8 @@ pub struct StreamingGenerator {
     // --- Persistent state across chunks ---
     /// Previous chunk's full diffusion output latents [1, T, 64].
     prev_latents: Option<Tensor>,
+    /// How many "real" (non-padding) frames are in prev_latents.
+    prev_latent_frames: usize,
     /// Tail audio samples from the previous chunk (for crossfade).
     /// Length = crossfade_samples * channels interleaved values.
     prev_audio_tail: Option<Vec<f32>>,
@@ -154,6 +166,7 @@ impl StreamingGenerator {
             language: config.language.clone(),
             config,
             prev_latents: None,
+            prev_latent_frames: 0,
             prev_audio_tail: None,
             caption: initial_caption.to_string(),
             metas: initial_metas.to_string(),
@@ -165,6 +178,16 @@ impl StreamingGenerator {
     /// Number of latent frames per chunk.
     fn chunk_frames(&self) -> usize {
         (self.config.chunk_duration_s * 25.0) as usize
+    }
+
+    /// Total latent frames for the full track (for planning).
+    fn total_frames(&self) -> usize {
+        let duration = if self.config.total_duration_s > 0.0 {
+            self.config.total_duration_s
+        } else {
+            self.config.chunk_duration_s
+        };
+        (duration * 25.0) as usize
     }
 
     /// Number of latent frames used as overlap context.
@@ -227,7 +250,20 @@ impl StreamingGenerator {
             self.config.shift,
         );
 
-        let seed = request.as_ref().and_then(|r| r.seed);
+        // If request provides an explicit seed use it; otherwise auto-generate
+        // one when auto_seed is enabled (ensures variety between chunks).
+        let seed = request.as_ref().and_then(|r| r.seed).or_else(|| {
+            if self.config.auto_seed {
+                Some(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_nanos() as u64,
+                )
+            } else {
+                None
+            }
+        });
         let device = pipeline.device().clone();
         let dtype = pipeline.dtype();
         let acoustic_dim = pipeline.config().audio_acoustic_hidden_dim;
@@ -236,6 +272,14 @@ impl StreamingGenerator {
         let is_first = self.prev_latents.is_none();
         let use_overlap = self.config.use_overlap && !is_first;
         let use_timbre = self.config.use_timbre_from_prev && !is_first;
+
+        tracing::debug!(
+            "chunk={} is_first={} use_overlap={} use_timbre={}",
+            self.chunk_index,
+            is_first,
+            use_overlap,
+            use_timbre
+        );
 
         tracing::info!(
             "  is_first={is_first} use_overlap={use_overlap} use_timbre={use_timbre} use_crossfade={}",
@@ -252,15 +296,49 @@ impl StreamingGenerator {
         );
 
         // --- Build src_latents and chunk_masks ---
+        let use_total_duration = self.config.total_duration_s > 0.0;
+
+        // For total duration mode: pad context to full track length
+        // but only generate chunk-sized pieces
+        let context_frames = if use_total_duration {
+            self.total_frames()
+        } else {
+            self.chunk_frames()
+        };
+
+        // How much new audio we generate this chunk
+        let new_len = if use_total_duration && !is_first {
+            self.chunk_frames() - self.overlap_frames() // Still generate just the new portion
+        } else {
+            self.new_frames()
+        };
+
+        // Overlap from previous
+        let overlap = self.overlap_frames();
+
+        tracing::info!(
+            "  DEBUG: context_frames={} new_len={} overlap={} use_total_duration={}",
+            context_frames,
+            new_len,
+            overlap,
+            use_total_duration
+        );
+
         let (src_latents, chunk_masks) = if use_overlap {
             let prev = self.prev_latents.as_ref().unwrap();
-            let overlap = self.overlap_frames();
-            let new_len = self.new_frames();
 
             // Take last `overlap` frames from previous output as context
-            let prev_t = prev.dim(1)?;
+            // Use prev_latent_frames to know how many real frames we have
+            let prev_t = self.prev_latent_frames;
             let overlap_start = prev_t.saturating_sub(overlap);
             let overlap_latents = prev.i((.., overlap_start.., ..))?.contiguous()?;
+
+            // Pad context to full track length if using total_duration
+            let padding_len = context_frames.saturating_sub(overlap + new_len);
+            let silence_padding = pipeline
+                .silence_latent()
+                .i((.., ..padding_len, ..))?
+                .contiguous()?;
 
             // Fill new region with silence
             let silence_new = pipeline
@@ -268,25 +346,31 @@ impl StreamingGenerator {
                 .i((.., ..new_len, ..))?
                 .contiguous()?;
 
-            // src_latents = [overlap_context | silence_new]
-            let src = Tensor::cat(&[&overlap_latents, &silence_new], 1)?;
+            // src_latents = [overlap_context | silence_new | silence_padding]
+            let src = Tensor::cat(&[&overlap_latents, &silence_new, &silence_padding], 1)?;
 
-            // chunk_masks = [zeros (keep) | ones (generate)]
-            let mask_keep = Tensor::zeros((1, overlap, acoustic_dim), dtype, &device)?;
+            // chunk_masks = [zeros (keep) | ones (generate) | zeros (future)]
+            let mask_keep = Tensor::zeros((1, overlap.min(prev_t), acoustic_dim), dtype, &device)?;
             let mask_gen = Tensor::ones((1, new_len, acoustic_dim), dtype, &device)?;
-            let masks = Tensor::cat(&[&mask_keep, &mask_gen], 1)?;
+            let mask_future = Tensor::zeros((1, padding_len, acoustic_dim), dtype, &device)?;
+            let masks = Tensor::cat(&[&mask_keep, &mask_gen, &mask_future], 1)?;
 
             (Some(src), Some(masks))
         } else {
             // No overlap: independent chunk (silence src_latents, all-ones mask)
-            (None, None)
+            let silence = pipeline
+                .silence_latent()
+                .i((.., ..context_frames, ..))?
+                .contiguous()?;
+            let mask = Tensor::ones((1, context_frames, acoustic_dim), dtype, &device)?;
+            (Some(silence), Some(mask))
         };
 
         // --- Timbre reference from previous latents (or silence) ---
         let (refer_audio, refer_order) = if use_timbre {
             let prev = self.prev_latents.as_ref().unwrap();
             // Use up to timbre_fix_frame frames from previous output as timbre ref
-            let prev_t = prev.dim(1)?;
+            let prev_t = self.prev_latent_frames;
             let ref_len = prev_t.min(timbre_fix_frame);
             let ref_latents = prev.i((.., ..ref_len, ..))?.contiguous()?;
 
@@ -310,12 +394,29 @@ impl StreamingGenerator {
         };
 
         // --- Generate via pipeline ---
+        // When using overlap, generate only the new portion (not full chunk)
+        let generation_duration = if is_first {
+            self.config.chunk_duration_s
+        } else if self.config.use_overlap {
+            // Generate only new portion: chunk_duration - overlap
+            (self.chunk_frames() - self.overlap_frames()) as f64 / 25.0
+        } else {
+            self.config.chunk_duration_s
+        };
+
+        tracing::debug!(
+            "generation_duration={}s (is_first={}, use_overlap={})",
+            generation_duration,
+            is_first,
+            self.config.use_overlap
+        );
+
         let params = GenerationParams {
             caption: self.caption.clone(),
             metas: self.metas.clone(),
             lyrics: self.lyrics.clone(),
             language: self.language.clone(),
-            duration_s: self.config.chunk_duration_s,
+            duration_s: generation_duration,
             shift: self.config.shift,
             seed,
             src_latents,
@@ -388,6 +489,7 @@ impl StreamingGenerator {
 
         // --- Save state for next chunk ---
         self.prev_latents = Some(latents);
+        self.prev_latent_frames = self.chunk_frames(); // Real audio frames generated this chunk
 
         // For first chunk, save tail after output
         if is_first {

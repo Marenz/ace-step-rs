@@ -13,7 +13,7 @@
 //!   key <scale|none>     — set or unset key (e.g. "D minor")
 //!   seed <number>        — seed for next chunk
 //!   toggle overlap|timbre|crossfade
-//!   set duration|overlap|crossfade <value>
+//!   set duration|overlap|crossfade|total <value>
 //!   - . +                — rate current chunk (bad / neutral / good)
 //!   q / Esc / Ctrl-C     — exit
 
@@ -32,7 +32,6 @@ use crossterm::{
     terminal::{self, ClearType},
 };
 use rodio::{OutputStream, Sink, Source};
-
 // ── Audio source with sample counter ──────────────────────────────────────
 
 struct ChannelSource {
@@ -115,6 +114,7 @@ enum ConfigUpdate {
     SetDuration(f64),
     SetOverlap(f64),
     SetCrossfade(u32),
+    SetTotal(f64),
 }
 
 enum GenResult {
@@ -193,11 +193,14 @@ impl TuiState {
     }
 
     fn rebuild_metas(&mut self) {
-        self.current_metas = build_metas(
-            self.bpm,
-            self.key_scale.as_deref(),
-            self.config.chunk_duration_s,
-        );
+        // Use total_duration_s for metas when set — tells the model the full artistic duration.
+        // When unset, fall back to chunk_duration_s.
+        let metas_duration = if self.config.total_duration_s > 0.0 {
+            self.config.total_duration_s
+        } else {
+            self.config.chunk_duration_s
+        };
+        self.current_metas = build_metas(self.bpm, self.key_scale.as_deref(), metas_duration);
         self.has_pending = true;
         self.pending.metas = Some(self.current_metas.clone());
     }
@@ -373,13 +376,19 @@ fn draw(out: &mut io::Stderr, state: &TuiState) -> io::Result<()> {
     } else {
         format!("{}", on_off(false).red())
     };
+    let total_str = if config.total_duration_s > 0.0 {
+        format!("{:.0}s", config.total_duration_s)
+    } else {
+        "off".to_string()
+    };
     writeln!(
         out,
-        "  dur:{:.0}s  ovlp:{:.0}s  xfade:{}ms  shift:{}  |  overlap:{}  timbre:{}  xfade:{}\r",
+        "  dur:{:.0}s  ovlp:{:.0}s  xfade:{}ms  shift:{}  total:{}  |  overlap:{}  timbre:{}  xfade:{}\r",
         config.chunk_duration_s,
         config.overlap_s,
         config.crossfade_ms,
         config.shift,
+        total_str,
         overlap_str,
         timbre_str,
         crossfade_str,
@@ -446,7 +455,7 @@ fn draw(out: &mut io::Stderr, state: &TuiState) -> io::Result<()> {
     writeln!(
         out,
         "  {}\r",
-        "toggle overlap|timbre|crossfade   set duration|overlap|crossfade <val>".dark_grey()
+        "toggle overlap|timbre|crossfade   set duration|overlap|crossfade|total <val>".dark_grey()
     )?;
     writeln!(
         out,
@@ -468,6 +477,7 @@ enum ParsedInput {
     Toggle(String),
     Set(String, String),
     Rate(String),
+    NaturalLanguage(String), // Free text like "make it happier, faster"
     Quit,
     Unknown(String),
 }
@@ -482,6 +492,7 @@ fn parse_input(line: &str) -> ParsedInput {
         return ParsedInput::Rate(line.to_string());
     }
 
+    // If it doesn't match known commands, treat as natural language
     let parts: Vec<&str> = line.splitn(3, ' ').collect();
     let cmd = parts[0].to_lowercase();
 
@@ -495,7 +506,8 @@ fn parse_input(line: &str) -> ParsedInput {
             ParsedInput::Set(parts[1].to_lowercase(), parts[2].to_string())
         }
         "quit" | "q" | "exit" => ParsedInput::Quit,
-        _ => ParsedInput::Unknown(line.to_string()),
+        // Unknown commands are treated as natural language
+        _ => ParsedInput::NaturalLanguage(line.to_string()),
     }
 }
 
@@ -542,15 +554,21 @@ fn generator_thread(
         StreamingGenerator::new(config, &initial_caption, &initial_metas, &initial_lyrics);
 
     loop {
+        // Check quit flag first (for Ctrl+C)
+        if QUIT_FLAG.load(std::sync::atomic::Ordering::Relaxed) {
+            return;
+        }
+
         let mut pending_request: Option<Option<ChunkRequest>> = None;
         let mut should_quit = false;
 
-        match cmd_rx.recv() {
+        // Use try_recv instead of recv to avoid blocking
+        match cmd_rx.try_recv() {
             Ok(GenCmd::Quit) => return,
             Ok(GenCmd::Config(upd)) => apply_config_update(streamer.config_mut(), &upd),
             Ok(GenCmd::Generate(req)) => pending_request = Some(req),
             Ok(GenCmd::Rate(idx, rating)) => streamer.rate_chunk(idx, &rating),
-            Err(_) => return,
+            Err(_) => {}
         }
 
         while let Ok(cmd) = cmd_rx.try_recv() {
@@ -567,6 +585,11 @@ fn generator_thread(
 
         if should_quit {
             return;
+        }
+
+        // If no pending request and not currently generating, wait a bit to avoid spinning
+        if pending_request.is_none() {
+            std::thread::sleep(std::time::Duration::from_millis(10));
         }
 
         if let Some(req) = pending_request {
@@ -613,6 +636,7 @@ fn apply_config_update(cfg: &mut StreamConfig, upd: &ConfigUpdate) {
         ConfigUpdate::SetDuration(v) => cfg.chunk_duration_s = *v,
         ConfigUpdate::SetOverlap(v) => cfg.overlap_s = *v,
         ConfigUpdate::SetCrossfade(v) => cfg.crossfade_ms = *v,
+        ConfigUpdate::SetTotal(v) => cfg.total_duration_s = *v,
     }
 }
 
@@ -622,6 +646,9 @@ fn restore_terminal() {
     execute!(io::stderr(), terminal::LeaveAlternateScreen, cursor::Show).ok();
     terminal::disable_raw_mode().ok();
 }
+
+static CMD_TX: std::sync::OnceLock<mpsc::Sender<GenCmd>> = std::sync::OnceLock::new();
+static QUIT_FLAG: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 fn main() {
     // File-based logging (TUI owns stderr)
@@ -644,6 +671,18 @@ fn main() {
 
     terminal::enable_raw_mode().expect("failed to enable raw mode");
     execute!(io::stderr(), terminal::EnterAlternateScreen, cursor::Hide).ok();
+
+    // Setup Ctrl+C handler. CMD_TX is a static OnceLock — at signal time,
+    // CMD_TX.get() will return the sender if it has been initialized by run().
+    ctrlc::set_handler(move || {
+        restore_terminal();
+        if let Some(tx) = CMD_TX.get() {
+            tx.send(GenCmd::Quit).ok();
+        }
+        QUIT_FLAG.store(true, std::sync::atomic::Ordering::Relaxed);
+        std::process::exit(0);
+    })
+    .ok();
 
     let result = run();
 
@@ -690,6 +729,9 @@ fn run() -> ace_step_rs::Result<()> {
     // --- Channels ---
     let (cmd_tx, cmd_rx) = mpsc::channel::<GenCmd>();
     let (result_tx, result_rx) = mpsc::channel::<GenResult>();
+
+    // Register cmd_tx for signal handler
+    CMD_TX.set(cmd_tx.clone()).ok();
 
     let gen_handle = thread::spawn({
         let caption = initial_caption.to_string();
@@ -763,22 +805,30 @@ fn run() -> ace_step_rs::Result<()> {
             }
         }
 
+        // Check if we received Ctrl+C via signal handler
+        if QUIT_FLAG.load(std::sync::atomic::Ordering::Relaxed) {
+            break;
+        }
+
         // Poll input
         if event::poll(std::time::Duration::from_millis(50)).unwrap_or(false) {
-            if let Ok(Event::Key(KeyEvent {
-                code, modifiers, ..
-            })) = event::read()
-            {
-                match code {
-                    KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => {
-                        cmd_tx.send(GenCmd::Quit).ok();
-                        break;
-                    }
-                    KeyCode::Esc => {
-                        cmd_tx.send(GenCmd::Quit).ok();
-                        break;
-                    }
-                    KeyCode::Char(c) => {
+            if let Ok(event) = event::read() {
+                match event {
+                    Event::Key(KeyEvent {
+                        code, modifiers, ..
+                    }) => {
+                        match code {
+                            KeyCode::Char('c') if modifiers.contains(KeyModifiers::CONTROL) => {
+                                QUIT_FLAG.store(true, std::sync::atomic::Ordering::Relaxed);
+                                cmd_tx.send(GenCmd::Quit).ok();
+                                break;
+                            }
+                            KeyCode::Esc => {
+                                QUIT_FLAG.store(true, std::sync::atomic::Ordering::Relaxed);
+                                cmd_tx.send(GenCmd::Quit).ok();
+                                break;
+                            }
+                            KeyCode::Char(c) => {
                         tui.input_buf.push(c);
                         draw(&mut stderr, &tui)?;
                     }
@@ -806,8 +856,10 @@ fn run() -> ace_step_rs::Result<()> {
 
     drop(cmd_tx);
     gen_handle.join().ok();
+    // Give sink a moment to finish current audio, but don't wait forever
     sink.sleep_until_end();
 
+    restore_terminal();
     Ok(())
 }
 
@@ -903,6 +955,19 @@ fn handle_input(line: &str, tui: &mut TuiState, cmd_tx: &mpsc::Sender<GenCmd>) {
                     }
                 }
             }
+            "total" => {
+                if let Ok(v) = value.parse::<f64>() {
+                    tui.config.total_duration_s = v;
+                    cmd_tx.send(GenCmd::Config(ConfigUpdate::SetTotal(v))).ok();
+                    tui.rebuild_metas();
+                    if v > 0.0 {
+                        tui.status_line =
+                            format!("Total: {v}s — metas updated, model plans full-track structure");
+                    } else {
+                        tui.status_line = "Total duration: disabled (metas reverted to chunk duration)".to_string();
+                    }
+                }
+            }
             _ => tui.status_line = format!("Unknown setting: {param}"),
         },
         ParsedInput::Rate(r) => {
@@ -913,6 +978,13 @@ fn handle_input(line: &str, tui: &mut TuiState, cmd_tx: &mpsc::Sender<GenCmd>) {
         }
         ParsedInput::Quit => {
             cmd_tx.send(GenCmd::Quit).ok();
+        }
+        ParsedInput::NaturalLanguage(s) => {
+            // Treat free-form text as a caption update
+            tui.current_caption = s.clone();
+            tui.has_pending = true;
+            tui.pending.caption = Some(s.clone());
+            tui.status_line = format!("Caption updated: {}", &s[..s.len().min(60)]);
         }
         ParsedInput::Unknown(s) if !s.is_empty() => {
             tui.status_line = format!("Unknown: {s}");
