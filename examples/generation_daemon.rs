@@ -284,6 +284,12 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
 
     let audio = match manager.generate(params).await {
         Ok(a) => a,
+        Err(ref e) if e.to_string().contains("manager has shut down") => {
+            // The manager background thread has died (e.g. double OOM failure).
+            // Exit so systemd can restart the process and reload the pipeline.
+            tracing::error!("generation manager has shut down — exiting for restart");
+            std::process::exit(1);
+        }
         Err(e) => return Response::err(format!("generation failed: {e}")),
     };
 
