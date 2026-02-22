@@ -19,10 +19,14 @@
 //!   key <scale|none>              — set/unset key (e.g. "A minor")
 //!   lang <code>                   — language (en, zh, ...)
 //!   seed <n>                      — seed for next chunk
-//!   toggle overlap|timbre|crossfade
-//!   set duration|overlap|crossfade|total <val>
+//!   step <n>                      — step size in seconds (new audio + virtual position advance)
+//!   mode fixed|advancing          — virtual position mode (fixed = always same arc point; advancing = progresses through song)
+//!   set window <n>                — window size in seconds (takes effect on restart)
+//!   save <name>                   — save window snapshot
+//!   load <name>                   — load window snapshot
 //!   state                         — request current state snapshot
-//!   - . +                         — rate current chunk (bad/neutral/good)
+//!   - . +                         — rate current step (bad/neutral/good)
+//!   restart                       — re-exec binary
 //!   q / quit / exit               — shut down daemon
 //!
 //! Daemon → Client (events):
@@ -35,114 +39,52 @@
 
 use std::io::{self, BufRead, BufReader, Write};
 use std::os::unix::net::{UnixListener, UnixStream};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 
-use ace_step_rs::pipeline::{format_metas, AceStepPipeline};
-use ace_step_rs::streaming::{ChunkRequest, StreamConfig, StreamingGenerator};
-use rodio::{OutputStream, Sink, Source};
-
-// ── Audio source (copied from stream_cli) ────────────────────────────────
-
-struct ChannelSource {
-    rx: mpsc::Receiver<Vec<f32>>,
-    current: Vec<f32>,
-    pos: usize,
-    channels: u16,
-    sample_rate: u32,
-    consumed: Arc<AtomicUsize>,
-}
-
-impl ChannelSource {
-    fn new(
-        rx: mpsc::Receiver<Vec<f32>>,
-        channels: u16,
-        sample_rate: u32,
-        consumed: Arc<AtomicUsize>,
-    ) -> Self {
-        Self {
-            rx,
-            current: Vec::new(),
-            pos: 0,
-            channels,
-            sample_rate,
-            consumed,
-        }
-    }
-}
-
-impl Iterator for ChannelSource {
-    type Item = f32;
-    fn next(&mut self) -> Option<f32> {
-        loop {
-            if self.pos < self.current.len() {
-                let s = self.current[self.pos];
-                self.pos += 1;
-                self.consumed.fetch_add(1, Ordering::Relaxed);
-                return Some(s);
-            }
-            match self.rx.recv() {
-                Ok(buf) => {
-                    self.current = buf;
-                    self.pos = 0;
-                }
-                Err(_) => return None,
-            }
-        }
-    }
-}
-
-impl Source for ChannelSource {
-    fn current_frame_len(&self) -> Option<usize> {
-        None
-    }
-    fn channels(&self) -> u16 {
-        self.channels
-    }
-    fn sample_rate(&self) -> u32 {
-        self.sample_rate
-    }
-    fn total_duration(&self) -> Option<std::time::Duration> {
-        None
-    }
-}
+use ace_step_rs::pipeline::AceStepPipeline;
+use ace_step_rs::streaming::{
+    ChunkRequest, PositionMode, SlidingWindowConfig, SlidingWindowGenerator, WindowSnapshot,
+};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use ringbuf::traits::{Consumer, Observer, Producer, Split};
+use ringbuf::{HeapProd, HeapRb};
 
 // ── Messages ─────────────────────────────────────────────────────────────
 
 enum GenCmd {
-    /// Override fields for the next chunk (caption, lyrics, seed, etc.)
+    /// Override fields for the next step (caption, lyrics, seed, step_s, etc.)
     Override(ChunkRequest),
-    Config(ConfigUpdate),
+    /// Save current window snapshot under a name
+    SaveSnapshot(String),
+    /// Load a previously saved snapshot
+    LoadSnapshot(String),
     Rate(usize, String),
     Quit,
 }
 
-enum ConfigUpdate {
-    ToggleOverlap,
-    ToggleTimbre,
-    ToggleCrossfade,
-    SetDuration(f64),
-    SetOverlap(f64),
-    SetCrossfade(u32),
-    SetTotal(f64),
-}
-
 enum GenEvent {
-    Ready(StreamConfig),
+    Ready(SlidingWindowConfig),
     Generating {
-        chunk_index: usize,
+        step_index: usize,
     },
-    Chunk {
-        chunk_index: usize,
+    Step {
+        step_index: usize,
         audio_samples: usize,
         gen_time_s: f64,
+        step_s: f64,
+        window_s: f64,
+        pos_s: f64,
         caption: String,
-        metas: String,
         lyrics: String,
         language: String,
-        config: StreamConfig,
+        bpm: Option<u32>,
+        key_scale: Option<String>,
+        config: SlidingWindowConfig,
     },
+    SnapshotSaved(String),
+    SnapshotLoaded(String),
     Error(String),
 }
 
@@ -159,14 +101,16 @@ fn broadcast(clients: &ClientList, msg: &str) {
 
 struct DaemonState {
     caption: String,
-    metas: String,
     lyrics: String,
     language: String,
     bpm: Option<u32>,
     key_scale: Option<String>,
-    chunk_index: usize,
-    config: StreamConfig,
+    step_index: usize,
+    pos_s: f64,
+    config: SlidingWindowConfig,
     is_generating: bool,
+    /// Just the names of saved snapshots (full state lives in generator thread).
+    snapshot_names: std::collections::HashSet<String>,
 }
 
 impl DaemonState {
@@ -188,21 +132,25 @@ impl DaemonState {
             .map(|c| if c == '\n' { '↵' } else { c })
             .take(80)
             .collect();
+        let snapshot_names: Vec<&String> = self.snapshot_names.iter().collect();
+        let mode = match self.config.position_mode {
+            ace_step_rs::streaming::PositionMode::Advancing => "advancing",
+            ace_step_rs::streaming::PositionMode::Fixed => "fixed",
+        };
         format!(
-            "event:state chunk={} generating={} bpm={} key={:?} lang={} \
-             dur={:.0} ovlp={:.0} total={:.0} overlap={} timbre={} xfade={} \
+            "event:state step={} pos={:.0}s generating={} bpm={} key={:?} lang={} \
+             window={:.0}s step_s={:.0}s mode={} snapshots={:?} \
              caption={:?} lyrics={:?}",
-            self.chunk_index,
+            self.step_index,
+            self.pos_s,
             self.is_generating,
             bpm,
             key,
             self.language,
-            self.config.chunk_duration_s,
-            self.config.overlap_s,
-            self.config.total_duration_s,
-            self.config.use_overlap,
-            self.config.use_timbre_from_prev,
-            self.config.use_crossfade,
+            self.config.window_s,
+            self.config.step_s,
+            mode,
+            snapshot_names,
             caption_flat,
             lyrics_flat,
         )
@@ -215,10 +163,11 @@ type SharedState = Arc<Mutex<DaemonState>>;
 
 enum ParsedCmd {
     FieldUpdate(String, String),
-    Toggle(String),
     Set(String, String),
     Rate(String),
     StateQuery,
+    SaveSnapshot(String),
+    LoadSnapshot(String),
     Restart,
     Quit,
     Unknown(String),
@@ -235,12 +184,15 @@ fn parse_cmd(line: &str) -> ParsedCmd {
     let parts: Vec<&str> = line.splitn(3, ' ').collect();
     let cmd = parts[0].to_lowercase();
     match cmd.as_str() {
-        "caption" | "lyrics" | "lang" | "seed" | "bpm" | "key" if parts.len() >= 2 => {
+        "caption" | "lyrics" | "lang" | "seed" | "bpm" | "key" | "step" | "mode"
+            if parts.len() >= 2 =>
+        {
             let rest = line[cmd.len()..].trim().to_string();
             ParsedCmd::FieldUpdate(cmd, rest)
         }
-        "toggle" if parts.len() >= 2 => ParsedCmd::Toggle(parts[1].to_lowercase()),
         "set" if parts.len() >= 3 => ParsedCmd::Set(parts[1].to_lowercase(), parts[2].to_string()),
+        "save" if parts.len() >= 2 => ParsedCmd::SaveSnapshot(parts[1].to_string()),
+        "load" if parts.len() >= 2 => ParsedCmd::LoadSnapshot(parts[1].to_string()),
         "state" => ParsedCmd::StateQuery,
         "restart" => ParsedCmd::Restart,
         "quit" | "q" | "exit" => ParsedCmd::Quit,
@@ -269,11 +221,16 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
                     } else {
                         return Some("event:error invalid bpm value".to_string());
                     }
-                    rebuild_metas(&mut st);
+                    let bpm = st.bpm;
+                    cmd_tx
+                        .send(GenCmd::Override(ChunkRequest {
+                            bpm: Some(bpm),
+                            ..Default::default()
+                        }))
+                        .ok();
                     format!(
                         "event:ok bpm={}",
-                        st.bpm
-                            .map(|b| b.to_string())
+                        bpm.map(|b| b.to_string())
                             .unwrap_or_else(|| "none".to_string())
                     )
                 }
@@ -283,8 +240,14 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
                     } else {
                         st.key_scale = Some(value.clone());
                     }
-                    rebuild_metas(&mut st);
-                    format!("event:ok key={:?}", st.key_scale)
+                    let key = st.key_scale.clone();
+                    cmd_tx
+                        .send(GenCmd::Override(ChunkRequest {
+                            key_scale: Some(key.clone()),
+                            ..Default::default()
+                        }))
+                        .ok();
+                    format!("event:ok key={:?}", key)
                 }
                 "caption" => {
                     st.caption = value.clone();
@@ -294,10 +257,7 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
                             ..Default::default()
                         }))
                         .ok();
-                    format!(
-                        "event:ok caption updated: {}",
-                        &value[..value.len().min(60)]
-                    )
+                    format!("event:ok caption: {}", &value[..value.len().min(60)])
                 }
                 "lyrics" => {
                     let lyrics = value.replace("\\n", "\n");
@@ -333,55 +293,51 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
                         "event:error invalid seed".to_string()
                     }
                 }
+                "step" => {
+                    if let Ok(s) = value.parse::<f64>() {
+                        let window = st.config.window_s;
+                        let clamped = s.clamp(1.0, window - 1.0);
+                        st.config.step_s = clamped;
+                        cmd_tx
+                            .send(GenCmd::Override(ChunkRequest {
+                                step_s: Some(clamped),
+                                ..Default::default()
+                            }))
+                            .ok();
+                        format!("event:ok step={clamped:.0}s (window={window:.0}s)")
+                    } else {
+                        "event:error invalid step value".to_string()
+                    }
+                }
+                "mode" => {
+                    let mode = match value.to_lowercase().as_str() {
+                        "fixed" => Some(PositionMode::Fixed),
+                        "advancing" => Some(PositionMode::Advancing),
+                        _ => None,
+                    };
+                    if let Some(m) = mode {
+                        st.config.position_mode = m.clone();
+                        cmd_tx
+                            .send(GenCmd::Override(ChunkRequest {
+                                position_mode: Some(m.clone()),
+                                ..Default::default()
+                            }))
+                            .ok();
+                        format!("event:ok mode={value}")
+                    } else {
+                        "event:error mode must be 'fixed' or 'advancing'".to_string()
+                    }
+                }
                 _ => format!("event:error unknown field: {field}"),
             };
             Some(ack)
         }
 
-        ParsedCmd::Toggle(what) => {
-            let upd = match what.as_str() {
-                "overlap" => Some(ConfigUpdate::ToggleOverlap),
-                "timbre" => Some(ConfigUpdate::ToggleTimbre),
-                "crossfade" => Some(ConfigUpdate::ToggleCrossfade),
-                _ => None,
-            };
-            if let Some(upd) = upd {
-                cmd_tx.send(GenCmd::Config(upd)).ok();
-                Some(format!("event:ok toggle {what}"))
-            } else {
-                Some(format!("event:error unknown toggle: {what}"))
-            }
-        }
-
         ParsedCmd::Set(param, value) => {
             let result = match param.as_str() {
-                "duration" => value.parse::<f64>().ok().map(|v| {
-                    cmd_tx
-                        .send(GenCmd::Config(ConfigUpdate::SetDuration(v)))
-                        .ok();
-                    state.lock().unwrap().config.chunk_duration_s = v;
-                    format!("event:ok duration={v}s")
-                }),
-                "overlap" => value.parse::<f64>().ok().map(|v| {
-                    cmd_tx
-                        .send(GenCmd::Config(ConfigUpdate::SetOverlap(v)))
-                        .ok();
-                    state.lock().unwrap().config.overlap_s = v;
-                    format!("event:ok overlap={v}s")
-                }),
-                "crossfade" => value.parse::<u32>().ok().map(|v| {
-                    cmd_tx
-                        .send(GenCmd::Config(ConfigUpdate::SetCrossfade(v)))
-                        .ok();
-                    state.lock().unwrap().config.crossfade_ms = v;
-                    format!("event:ok crossfade={v}ms")
-                }),
-                "total" => value.parse::<f64>().ok().map(|v| {
-                    cmd_tx.send(GenCmd::Config(ConfigUpdate::SetTotal(v))).ok();
-                    let mut st = state.lock().unwrap();
-                    st.config.total_duration_s = v;
-                    rebuild_metas(&mut st);
-                    format!("event:ok total={v}s")
+                "window" => value.parse::<f64>().ok().map(|v| {
+                    state.lock().unwrap().config.window_s = v;
+                    format!("event:ok window={v:.0}s (takes effect on restart)")
                 }),
                 _ => Some(format!("event:error unknown setting: {param}")),
             };
@@ -389,9 +345,33 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
         }
 
         ParsedCmd::Rate(r) => {
-            let idx = state.lock().unwrap().chunk_index.saturating_sub(1);
+            let idx = state.lock().unwrap().step_index.saturating_sub(1);
             cmd_tx.send(GenCmd::Rate(idx, r.clone())).ok();
-            Some(format!("event:ok rated chunk {idx}: {r}"))
+            Some(format!("event:ok rated step {idx}: {r}"))
+        }
+
+        ParsedCmd::SaveSnapshot(name) => {
+            cmd_tx.send(GenCmd::SaveSnapshot(name.clone())).ok();
+            Some(format!("event:ok saving snapshot {name:?}"))
+        }
+
+        ParsedCmd::LoadSnapshot(name) => {
+            let has = state.lock().unwrap().snapshot_names.contains(&name);
+            if has {
+                cmd_tx.send(GenCmd::LoadSnapshot(name.clone())).ok();
+                Some(format!("event:ok loading snapshot {name:?}"))
+            } else {
+                let names: Vec<String> = state
+                    .lock()
+                    .unwrap()
+                    .snapshot_names
+                    .iter()
+                    .cloned()
+                    .collect();
+                Some(format!(
+                    "event:error snapshot {name:?} not found, available: {names:?}"
+                ))
+            }
         }
 
         ParsedCmd::StateQuery => {
@@ -406,15 +386,6 @@ fn process_cmd(line: &str, cmd_tx: &mpsc::Sender<GenCmd>, state: &SharedState) -
         ParsedCmd::Unknown(s) if s.is_empty() => Some(String::new()),
         ParsedCmd::Unknown(s) => Some(format!("event:error unknown command: {s}")),
     }
-}
-
-fn rebuild_metas(st: &mut DaemonState) {
-    let duration = if st.config.total_duration_s > 0.0 {
-        st.config.total_duration_s
-    } else {
-        st.config.chunk_duration_s
-    };
-    st.metas = format_metas(st.bpm, Some("4/4"), st.key_scale.as_deref(), Some(duration));
 }
 
 // ── Socket accept loop ────────────────────────────────────────────────────
@@ -468,7 +439,9 @@ fn handle_client(
                 broadcast(&clients, "event:restarting");
                 quit_flag.store(true, Ordering::Relaxed);
                 cmd_tx.send(GenCmd::Quit).ok();
-                let exe = std::env::current_exe().expect("current_exe");
+                // Use /proc/self/exe so Linux resolves to the current binary
+                // on disk (even after a rebuild replaced the inode).
+                let exe = std::path::PathBuf::from("/proc/self/exe");
                 let args: Vec<String> = std::env::args().skip(1).collect();
                 tracing::info!("Restarting: {:?} {:?}", exe, args);
                 thread::spawn(move || {
@@ -526,27 +499,20 @@ fn socket_accept_loop(
 
 // ── Generator thread ──────────────────────────────────────────────────────
 
-fn apply_config_update(cfg: &mut StreamConfig, upd: &ConfigUpdate) {
-    match upd {
-        ConfigUpdate::ToggleOverlap => cfg.use_overlap = !cfg.use_overlap,
-        ConfigUpdate::ToggleTimbre => cfg.use_timbre_from_prev = !cfg.use_timbre_from_prev,
-        ConfigUpdate::ToggleCrossfade => cfg.use_crossfade = !cfg.use_crossfade,
-        ConfigUpdate::SetDuration(v) => cfg.chunk_duration_s = *v,
-        ConfigUpdate::SetOverlap(v) => cfg.overlap_s = *v,
-        ConfigUpdate::SetCrossfade(v) => cfg.crossfade_ms = *v,
-        ConfigUpdate::SetTotal(v) => cfg.total_duration_s = *v,
-    }
-}
-
 fn generator_thread(
     cmd_rx: mpsc::Receiver<GenCmd>,
     event_tx: mpsc::Sender<GenEvent>,
-    audio_tx: mpsc::SyncSender<Vec<f32>>,
+    mut ring_prod: HeapProd<f32>,
     initial_caption: String,
-    initial_metas: String,
     initial_lyrics: String,
+    initial_bpm: Option<u32>,
+    initial_key_scale: Option<String>,
     initial_lang: String,
     quit_flag: Arc<AtomicBool>,
+    // Snapshots are shared with DaemonState for client queries
+    snapshots: Arc<
+        Mutex<std::collections::HashMap<String, ace_step_rs::streaming::WindowSnapshot>>,
+    >,
 ) {
     let device = match candle_core::Device::cuda_if_available(0) {
         Ok(d) => d,
@@ -566,36 +532,46 @@ fn generator_thread(
         }
     };
 
-    let config = StreamConfig {
+    let config = SlidingWindowConfig {
         language: initial_lang,
         ..Default::default()
     };
 
     event_tx.send(GenEvent::Ready(config.clone())).ok();
 
-    let mut streamer =
-        StreamingGenerator::new(config, &initial_caption, &initial_metas, &initial_lyrics);
+    let mut generator = SlidingWindowGenerator::new(
+        config,
+        &initial_caption,
+        initial_bpm,
+        initial_key_scale.as_deref(),
+        "4/4",
+        &initial_lyrics,
+    );
 
     loop {
         if quit_flag.load(Ordering::Relaxed) {
             return;
         }
 
-        // Drain all pending commands, accumulating any override request
+        // Drain all pending commands; merge overrides, last-write-wins per field
         let mut override_req = ChunkRequest::default();
         let mut has_override = false;
 
         loop {
             match cmd_rx.try_recv() {
                 Ok(GenCmd::Quit) => return,
-                Ok(GenCmd::Config(upd)) => apply_config_update(streamer.config_mut(), &upd),
                 Ok(GenCmd::Override(req)) => {
-                    // Merge: last write wins per field
                     if req.caption.is_some() {
                         override_req.caption = req.caption;
                     }
-                    if req.metas.is_some() {
-                        override_req.metas = req.metas;
+                    if req.bpm.is_some() {
+                        override_req.bpm = req.bpm;
+                    }
+                    if req.key_scale.is_some() {
+                        override_req.key_scale = req.key_scale;
+                    }
+                    if req.time_signature.is_some() {
+                        override_req.time_signature = req.time_signature;
                     }
                     if req.lyrics.is_some() {
                         override_req.lyrics = req.lyrics;
@@ -606,9 +582,34 @@ fn generator_thread(
                     if req.seed.is_some() {
                         override_req.seed = req.seed;
                     }
+                    if req.step_s.is_some() {
+                        override_req.step_s = req.step_s;
+                    }
+                    if req.position_mode.is_some() {
+                        override_req.position_mode = req.position_mode;
+                    }
                     has_override = true;
                 }
-                Ok(GenCmd::Rate(idx, rating)) => streamer.rate_chunk(idx, &rating),
+                Ok(GenCmd::SaveSnapshot(name)) => {
+                    if let Some(snap) = generator.save_snapshot() {
+                        snapshots.lock().unwrap().insert(name.clone(), snap);
+                        event_tx.send(GenEvent::SnapshotSaved(name)).ok();
+                    }
+                }
+                Ok(GenCmd::LoadSnapshot(name)) => {
+                    let snap = snapshots.lock().unwrap().remove(&name);
+                    if let Some(snap) = snap {
+                        generator.load_snapshot(&snap);
+                        // Put it back so it can be loaded again
+                        if let Some(new_snap) = generator.save_snapshot() {
+                            snapshots.lock().unwrap().insert(name.clone(), new_snap);
+                        }
+                        event_tx.send(GenEvent::SnapshotLoaded(name)).ok();
+                    }
+                }
+                Ok(GenCmd::Rate(idx, rating)) => {
+                    tracing::warn!("RATING step={idx} rating={rating}");
+                }
                 Err(_) => break,
             }
         }
@@ -619,31 +620,55 @@ fn generator_thread(
             None
         };
 
-        let chunk_idx = streamer.chunks_generated();
         event_tx
             .send(GenEvent::Generating {
-                chunk_index: chunk_idx,
+                step_index: generator.steps_generated(),
             })
             .ok();
 
         let t0 = std::time::Instant::now();
-        match streamer.next_chunk(&mut pipeline, req) {
-            Ok(chunk) => {
+        tracing::info!(
+            "next_step: caption={:?} lyrics_len={} bpm={:?}",
+            &generator.caption()[..generator.caption().len().min(60)],
+            generator.lyrics().len(),
+            generator.bpm(),
+        );
+        match generator.next_step(&mut pipeline, req) {
+            Ok(step) => {
                 let gen_time = t0.elapsed().as_secs_f64();
-                let audio_samples = chunk.audio.samples.len();
-                if audio_tx.send(chunk.audio.samples).is_err() {
-                    return;
+                let audio_samples = step.audio.samples.len();
+                // Push directly into ring buffer, spinning when full.
+                // This blocks the generator naturally: ring holds ~1.5 steps,
+                // so once the ring is full the generator waits for playback
+                // to consume samples before generating the next step.
+                {
+                    let samples = step.audio.samples;
+                    let mut offset = 0;
+                    while offset < samples.len() {
+                        if quit_flag.load(Ordering::Relaxed) {
+                            return;
+                        }
+                        let written = ring_prod.push_slice(&samples[offset..]);
+                        offset += written;
+                        if written == 0 {
+                            std::thread::sleep(std::time::Duration::from_millis(1));
+                        }
+                    }
                 }
                 event_tx
-                    .send(GenEvent::Chunk {
-                        chunk_index: chunk.chunk_index,
+                    .send(GenEvent::Step {
+                        step_index: step.step_index,
                         audio_samples,
                         gen_time_s: gen_time,
-                        caption: streamer.caption().to_string(),
-                        metas: streamer.metas().to_string(),
-                        lyrics: streamer.lyrics().to_string(),
-                        language: streamer.language().to_string(),
-                        config: streamer.config().clone(),
+                        step_s: step.step_s,
+                        window_s: step.window_s,
+                        pos_s: step.pos_s,
+                        caption: generator.caption().to_string(),
+                        lyrics: generator.lyrics().to_string(),
+                        language: generator.language().to_string(),
+                        bpm: generator.bpm(),
+                        key_scale: generator.key_scale().map(|s| s.to_string()),
+                        config: generator.config.clone(),
                     })
                     .ok();
             }
@@ -690,54 +715,117 @@ fn main() {
     let clients: ClientList = Arc::new(Mutex::new(Vec::new()));
 
     // Initial generation parameters
-    let initial_caption =
-        "Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, \
-         neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music";
+    let initial_caption = "melodic electronic, lush pads, warm bassline, hypnotic groove, \
+         subtle percussion, ambient textures, flowing and immersive";
     let initial_lyrics = "la la la la la la la la\nla la la la la la la la\n\
                           oh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh";
     let initial_lang = "en";
-    let initial_bpm: Option<u32> = Some(128);
-    let initial_key: Option<&str> = Some("A minor");
-    let initial_metas = format_metas(initial_bpm, Some("4/4"), initial_key, Some(30.0));
+    let initial_bpm: Option<u32> = Some(120);
+    let initial_key: Option<&str> = Some("F major");
+    let initial_config = SlidingWindowConfig {
+        language: initial_lang.to_string(),
+        ..Default::default()
+    };
+
+    // Snapshots shared between generator thread and daemon state
+    let snapshots: Arc<Mutex<std::collections::HashMap<String, WindowSnapshot>>> =
+        Arc::new(Mutex::new(std::collections::HashMap::new()));
 
     // Shared state (for socket clients to query / update display fields)
     let state = Arc::new(Mutex::new(DaemonState {
         caption: initial_caption.to_string(),
-        metas: initial_metas.clone(),
         lyrics: initial_lyrics.to_string(),
         language: initial_lang.to_string(),
         bpm: initial_bpm,
         key_scale: initial_key.map(|s| s.to_string()),
-        chunk_index: 0,
-        config: StreamConfig::default(),
+        step_index: 0,
+        pos_s: 0.0,
+        config: initial_config,
         is_generating: false,
+        snapshot_names: std::collections::HashSet::new(),
     }));
 
     // Channels
     let (cmd_tx, cmd_rx) = mpsc::channel::<GenCmd>();
     let (event_tx, event_rx) = mpsc::channel::<GenEvent>();
-    // 1-chunk buffer: generator stays exactly one chunk ahead of playback,
-    // so caption/lyrics changes take effect on the very next chunk.
-    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(1);
 
-    // Audio output
-    let playback_consumed = Arc::new(AtomicUsize::new(0));
-    let (_stream, stream_handle) =
-        OutputStream::try_default().expect("failed to open audio output");
-    let sink = Sink::try_new(&stream_handle).expect("failed to create audio sink");
-    let source = ChannelSource::new(audio_rx, 2, 48000, Arc::clone(&playback_consumed));
-    sink.append(source);
+    // Ring holds 2 steps so the generator stays exactly 1 step ahead of playback.
+    // While cpal plays step N, the generator fills step N+1 into the ring.
+    // Once full, generator blocks until cpal drains enough for step N+2 (~13s).
+    // At 30s steps / 13s gen, always ~17s surplus per step → solid headroom.
+    const STEP_SAMPLES: usize = 48000 * 2 * 30; // 30s stereo @ 48kHz
+    const RING_CAPACITY: usize = STEP_SAMPLES * 2; // 2 steps = 1 step ahead
+    let ring = HeapRb::<f32>::new(RING_CAPACITY);
+    let (ring_prod, mut ring_cons) = ring.split();
 
-    // Generator thread
+    // cpal audio output: callback pulls from ring buffer
+    let host = cpal::default_host();
+    let device = host
+        .default_output_device()
+        .expect("no audio output device");
+
+    // Log supported configs for diagnostics
+    if let Ok(mut configs) = device.supported_output_configs() {
+        while let Some(c) = configs.next() {
+            tracing::info!(
+                "cpal supported: ch={} rate={}-{} fmt={:?}",
+                c.channels(),
+                c.min_sample_rate().0,
+                c.max_sample_rate().0,
+                c.sample_format(),
+            );
+        }
+    }
+
+    let stream_config = cpal::StreamConfig {
+        channels: 2,
+        sample_rate: cpal::SampleRate(48000),
+        buffer_size: cpal::BufferSize::Default,
+    };
+    tracing::info!(
+        "cpal opening: device={:?} ch={} rate={}",
+        device.name().unwrap_or_default(),
+        stream_config.channels,
+        stream_config.sample_rate.0,
+    );
+    // Playback doesn't start until the first chunk is in the ring,
+    // eliminating the startup silence gap.
+    let playback_started = Arc::new(AtomicBool::new(false));
+    let playback_started2 = Arc::clone(&playback_started);
+    let _audio_stream = device
+        .build_output_stream(
+            &stream_config,
+            move |data: &mut [f32], _| {
+                if !playback_started2.load(Ordering::Relaxed) {
+                    data.fill(0.0);
+                    return;
+                }
+                let n = ring_cons.pop_slice(data);
+                // Fill remainder with silence if ring is behind
+                if n < data.len() {
+                    tracing::warn!("ring underrun: needed {} got {}", data.len(), n);
+                    data[n..].fill(0.0);
+                }
+            },
+            |e| tracing::error!("cpal error: {e}"),
+            None,
+        )
+        .expect("failed to build audio stream");
+    _audio_stream.play().expect("failed to start audio stream");
+
+    // Generator thread: owns ring_prod and pushes audio directly,
+    // blocking when the ring is full (natural backpressure).
     let gen_handle = thread::spawn({
         let caption = initial_caption.to_string();
-        let metas = initial_metas;
         let lyrics = initial_lyrics.to_string();
+        let bpm = initial_bpm;
+        let key = initial_key.map(|s| s.to_string());
         let lang = initial_lang.to_string();
         let quit = Arc::clone(&quit_flag);
+        let snaps = Arc::clone(&snapshots);
         move || {
             generator_thread(
-                cmd_rx, event_tx, audio_tx, caption, metas, lyrics, lang, quit,
+                cmd_rx, event_tx, ring_prod, caption, lyrics, bpm, key, lang, quit, snaps,
             )
         }
     });
@@ -788,39 +876,63 @@ fn main() {
         }
 
         match event_rx.recv_timeout(std::time::Duration::from_millis(200)) {
-            Ok(GenEvent::Generating { chunk_index }) => {
+            Ok(GenEvent::Generating { step_index }) => {
                 state.lock().unwrap().is_generating = true;
-                let msg = format!("event:generating chunk={chunk_index}");
+                let msg = format!("event:generating step={step_index}");
                 eprintln!("{msg}");
                 broadcast(&clients, &msg);
             }
-            Ok(GenEvent::Chunk {
-                chunk_index,
+            Ok(GenEvent::Step {
+                step_index,
                 audio_samples,
                 gen_time_s,
+                step_s,
+                window_s,
+                pos_s,
                 caption,
-                metas,
                 lyrics,
                 language,
+                bpm,
+                key_scale,
                 config,
             }) => {
+                // Start playback once the first chunk is in the ring.
+                if step_index == 0 {
+                    playback_started.store(true, Ordering::Relaxed);
+                    tracing::info!("Playback started (first chunk in ring)");
+                }
+
                 {
                     let mut st = state.lock().unwrap();
-                    st.chunk_index = chunk_index + 1;
+                    st.step_index = step_index + 1;
+                    st.pos_s = pos_s + step_s; // pos after this step
                     st.caption = caption;
-                    st.metas = metas;
                     st.lyrics = lyrics;
                     st.language = language;
+                    st.bpm = bpm;
+                    st.key_scale = key_scale;
                     st.config = config;
                     st.is_generating = false;
                 }
 
                 let audio_secs = audio_samples as f64 / (2.0 * 48000.0);
                 let msg = format!(
-                    "event:chunk chunk={chunk_index} audio={audio_secs:.1}s gen={gen_time_s:.2}s"
+                    "event:step step={step_index} pos={pos_s:.0}s audio={audio_secs:.1}s \
+                     gen={gen_time_s:.2}s step_s={step_s:.0}s window_s={window_s:.0}s"
                 );
                 eprintln!("{msg}");
                 tracing::info!("{msg}");
+                broadcast(&clients, &msg);
+            }
+            Ok(GenEvent::SnapshotSaved(name)) => {
+                state.lock().unwrap().snapshot_names.insert(name.clone());
+                let msg = format!("event:snapshot_saved {name}");
+                eprintln!("{msg}");
+                broadcast(&clients, &msg);
+            }
+            Ok(GenEvent::SnapshotLoaded(name)) => {
+                let msg = format!("event:snapshot_loaded {name}");
+                eprintln!("{msg}");
                 broadcast(&clients, &msg);
             }
             Ok(GenEvent::Error(e)) => {

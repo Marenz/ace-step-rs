@@ -54,7 +54,8 @@ fn main() -> ace_step_rs::Result<()> {
             caption: Some(
                 "funky groove, slap bass, wah guitar, tight drums, energetic".to_string(),
             ),
-            metas: Some("bpm: 110, key: E minor, genre: funk".to_string()),
+            bpm: Some(Some(110)),
+            key_scale: Some(Some("E minor".to_string())),
             lyrics: Some(
                 "[chorus]\nGet up get down the groove is in the sound\nFeel the rhythm moving round and round\n"
                     .to_string(),

@@ -89,21 +89,33 @@ impl Default for StreamConfig {
 pub struct ChunkRequest {
     /// New caption (genre/style tags). `None` = keep previous.
     pub caption: Option<String>,
-    /// New metadata (bpm, key, etc.). `None` = keep previous.
-    pub metas: Option<String>,
+    /// New BPM. `None` = keep previous. `Some(None)` = unset (N/A).
+    pub bpm: Option<Option<u32>>,
+    /// New key/scale. `None` = keep previous. `Some(None)` = unset (N/A).
+    pub key_scale: Option<Option<String>>,
+    /// New time signature. `None` = keep previous.
+    pub time_signature: Option<String>,
     /// New lyrics for this chunk. `None` = keep previous.
     pub lyrics: Option<String>,
     /// New language. `None` = keep previous.
     pub language: Option<String>,
     /// Random seed for this chunk. `None` = random.
     pub seed: Option<u64>,
+    /// New step size in seconds (sliding window only). `None` = keep previous.
+    pub step_s: Option<f64>,
+    /// New position mode. `None` = keep previous.
+    pub position_mode: Option<PositionMode>,
 }
 
 impl Default for ChunkRequest {
     fn default() -> Self {
         Self {
+            step_s: None,
+            position_mode: None,
             caption: None,
-            metas: None,
+            bpm: None,
+            key_scale: None,
+            time_signature: None,
             lyrics: None,
             language: None,
             seed: None,
@@ -223,10 +235,6 @@ impl StreamingGenerator {
             if let Some(ref c) = req.caption {
                 tracing::info!("  caption override: {c}");
                 self.caption = c.clone();
-            }
-            if let Some(ref m) = req.metas {
-                tracing::info!("  metas override: {m}");
-                self.metas = m.clone();
             }
             if let Some(ref l) = req.lyrics {
                 tracing::info!("  lyrics override: {:?}", &l[..l.len().min(80)]);
@@ -741,6 +749,525 @@ fn generate_with_latents(
     Ok((audio, latents))
 }
 
+// ── Sliding Window Generator ──────────────────────────────────────────────
+
+/// Controls how the virtual song position advances between steps.
+///
+/// The position is used to compute `duration = pos + window_s` in metas,
+/// which tells the model where it is in the musical arc.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub enum PositionMode {
+    /// Position advances by `step_s` each step and wraps back to `step_s`
+    /// when `pos + step_s + window_s` would exceed `max_duration_s`.
+    /// Model experiences a slowly unfolding song arc.
+    #[default]
+    Advancing,
+    /// Position stays fixed at `window_s / 2` every step.
+    /// Model always thinks it's in the middle of a `window_s`-length track —
+    /// no arc progression, pure continuation.
+    Fixed,
+}
+
+/// Configuration for the sliding window generator.
+#[derive(Debug, Clone)]
+pub struct SlidingWindowConfig {
+    /// Full context window in seconds — what the model sees each step.
+    /// Should be a "musically complete" duration: 2–10 minutes.
+    /// Default: 240s (4 min).
+    pub window_s: f64,
+    /// How many new seconds to generate per step. Default: 30s.
+    /// Smaller = slower evolution, more continuity.
+    /// Larger = faster progression, bigger musical changes.
+    /// Must be < window_s.
+    pub step_s: f64,
+    /// Shift parameter for the turbo schedule. Default: 3.
+    pub shift: f64,
+    /// Default language. Default: "en".
+    pub language: String,
+    /// Auto-generate a new seed each step for variety. Default: true.
+    pub auto_seed: bool,
+    /// Maximum song duration in seconds — ACE-Step supports up to 600s (10 min).
+    /// Only used in `Advancing` mode. Default: 600s.
+    pub max_duration_s: f64,
+    /// How the virtual song position changes between steps. Default: `Advancing`.
+    pub position_mode: PositionMode,
+}
+
+impl Default for SlidingWindowConfig {
+    fn default() -> Self {
+        Self {
+            window_s: 240.0,
+            step_s: 30.0,
+            shift: 3.0,
+            language: "en".to_string(),
+            auto_seed: true,
+            max_duration_s: 600.0,
+            position_mode: PositionMode::default(),
+        }
+    }
+}
+
+/// A step of generated audio from the sliding window generator.
+pub struct WindowStep {
+    /// New audio samples for this step (stereo interleaved, 48 kHz).
+    /// Length = step_s * 48000 * 2 samples.
+    pub audio: GeneratedAudio,
+    /// Step index (0-indexed).
+    pub step_index: usize,
+    /// The step size used for this step in seconds.
+    pub step_s: f64,
+    /// Window size in seconds.
+    pub window_s: f64,
+    /// Song position at the start of this step (seconds).
+    pub pos_s: f64,
+}
+
+/// Infinite music generator using a sliding latent window.
+///
+/// Maintains a fixed-size window of latents (e.g. 4 minutes). Each step:
+/// 1. Shifts the window left by `step_s`, dropping the oldest audio.
+/// 2. Fills the tail with silence and sets `chunk_masks = 1` there.
+/// 3. Runs the full DiT forward pass over the entire window.
+/// 4. Outputs only the new tail audio.
+///
+/// The model always sees a full `window_s` of context, so it understands
+/// its position in the musical arc (intro / middle / outro) and generates
+/// accordingly. Step size controls the rate of musical evolution — small
+/// steps give slow, gradual change; large steps allow bigger jumps.
+///
+/// All parameters (caption, lyrics, step size) can be changed between steps
+/// via [`ChunkRequest`] and take effect on the very next generation.
+pub struct SlidingWindowGenerator {
+    pub config: SlidingWindowConfig,
+
+    /// The sliding window of latents [1, window_frames, 64].
+    /// `None` before the first step.
+    window_latents: Option<Tensor>,
+
+    /// How many frames at the start of the window are "real" generated audio
+    /// vs silence padding (only relevant during the initial fill phase).
+    filled_frames: usize,
+
+    /// Current caption.
+    caption: String,
+    /// Current lyrics.
+    lyrics: String,
+    /// Current language.
+    language: String,
+    /// Current BPM (None = N/A in metas).
+    bpm: Option<u32>,
+    /// Current key/scale (None = N/A in metas).
+    key_scale: Option<String>,
+    /// Current time signature.
+    time_signature: String,
+
+    /// Logical song position in seconds. Starts at 0.
+    /// Advances by `step_s` each step. Used as the "start" when computing
+    /// `duration = current_pos_s + window_s` for metas.
+    current_pos_s: f64,
+
+    /// Step counter.
+    step_index: usize,
+
+    /// Tail of the previous step's audio for crossfading (stereo interleaved).
+    /// Empty before the first step.
+    prev_tail: Vec<f32>,
+
+    /// Smoothed peak across steps for consistent loudness normalization.
+    /// Avoids loudness jumps between independently-normalized steps.
+    smoothed_peak: f32,
+}
+
+impl SlidingWindowGenerator {
+    pub fn new(
+        config: SlidingWindowConfig,
+        initial_caption: &str,
+        initial_bpm: Option<u32>,
+        initial_key_scale: Option<&str>,
+        initial_time_signature: &str,
+        initial_lyrics: &str,
+    ) -> Self {
+        Self {
+            language: config.language.clone(),
+            config,
+            window_latents: None,
+            filled_frames: 0,
+            caption: initial_caption.to_string(),
+            lyrics: initial_lyrics.to_string(),
+            bpm: initial_bpm,
+            key_scale: initial_key_scale.map(|s| s.to_string()),
+            time_signature: initial_time_signature.to_string(),
+            current_pos_s: 0.0,
+            step_index: 0,
+            prev_tail: Vec::new(),
+            smoothed_peak: 0.0,
+        }
+    }
+
+    fn window_frames(&self) -> usize {
+        (self.config.window_s * 25.0) as usize
+    }
+
+    fn step_frames(&self) -> usize {
+        (self.config.step_s * 25.0) as usize
+    }
+
+    /// Hop size in audio samples per latent frame (stereo interleaved).
+    const AUDIO_HOP: usize = 1920 * 2;
+
+    pub fn caption(&self) -> &str {
+        &self.caption
+    }
+    pub fn lyrics(&self) -> &str {
+        &self.lyrics
+    }
+    pub fn bpm(&self) -> Option<u32> {
+        self.bpm
+    }
+    pub fn key_scale(&self) -> Option<&str> {
+        self.key_scale.as_deref()
+    }
+    pub fn language(&self) -> &str {
+        &self.language
+    }
+    pub fn current_pos_s(&self) -> f64 {
+        self.current_pos_s
+    }
+    pub fn steps_generated(&self) -> usize {
+        self.step_index
+    }
+
+    /// Build the metas string for the current position.
+    ///
+    /// In `Advancing` mode: `duration = current_pos_s + window_s`, capped at `max_duration_s`.
+    /// In `Fixed` mode: `duration = window_s` (model always sees the same arc position).
+    fn current_metas(&self) -> String {
+        let pos = match self.config.position_mode {
+            PositionMode::Advancing => self.current_pos_s,
+            PositionMode::Fixed => 0.0,
+        };
+        let duration = (pos + self.config.window_s).min(self.config.max_duration_s);
+        tracing::info!(
+            "  metas: pos={:.0}s duration={:.0}s mode={:?} bpm={:?} key={:?}",
+            pos,
+            duration,
+            self.config.position_mode,
+            self.bpm,
+            self.key_scale,
+        );
+        crate::model::encoder::text::format_metas(
+            self.bpm,
+            Some(&self.time_signature),
+            self.key_scale.as_deref(),
+            Some(duration),
+        )
+    }
+
+    /// Apply overrides from a request.
+    fn apply_request(&mut self, req: &ChunkRequest) {
+        if let Some(ref c) = req.caption {
+            self.caption = c.clone();
+        }
+        if let Some(ref b) = req.bpm {
+            self.bpm = *b;
+        }
+        if let Some(ref k) = req.key_scale {
+            self.key_scale = k.clone();
+        }
+        if let Some(ref ts) = req.time_signature {
+            self.time_signature = ts.clone();
+        }
+        if let Some(ref l) = req.lyrics {
+            self.lyrics = l.clone();
+        }
+        if let Some(ref l) = req.language {
+            self.language = l.clone();
+        }
+        if let Some(s) = req.step_s {
+            self.config.step_s = s.clamp(1.0, self.config.window_s - 1.0);
+            tracing::info!("step_s changed to {:.1}s", self.config.step_s);
+        }
+        if let Some(ref m) = req.position_mode {
+            self.config.position_mode = m.clone();
+            tracing::info!("position_mode changed to {:?}", self.config.position_mode);
+        }
+    }
+
+    /// Generate the next step of audio.
+    ///
+    /// On the first call, generates the full window and outputs the first
+    /// `step_s` of audio. On subsequent calls, shifts the window and
+    /// regenerates only the new tail, outputting `step_s` of new audio.
+    pub fn next_step(
+        &mut self,
+        pipeline: &mut AceStepPipeline,
+        request: Option<ChunkRequest>,
+    ) -> Result<WindowStep> {
+        if let Some(ref req) = request {
+            self.apply_request(req);
+        }
+
+        let seed = request.as_ref().and_then(|r| r.seed).or_else(|| {
+            if self.config.auto_seed {
+                Some(
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_nanos() as u64,
+                )
+            } else {
+                None
+            }
+        });
+
+        let device = pipeline.device().clone();
+        let dtype = pipeline.dtype();
+        let acoustic_dim = pipeline.config().audio_acoustic_hidden_dim;
+        let timbre_fix_frame = pipeline.config().timbre_fix_frame;
+
+        let window_frames = self.window_frames();
+        let step_frames = self.step_frames();
+        let is_first = self.window_latents.is_none();
+
+        // In Advancing mode: wrap position before it would push duration past max_duration_s.
+        // Jump to step_s (just past the beginning) so the model thinks it's
+        // early in a fresh track rather than at second 0.
+        if self.config.position_mode == PositionMode::Advancing
+            && self.current_pos_s + self.config.step_s + self.config.window_s
+                > self.config.max_duration_s
+        {
+            let new_pos = self.config.step_s;
+            tracing::info!(
+                "SlidingWindowGenerator: position wrap {:.0}s → {:.0}s (max={:.0}s)",
+                self.current_pos_s,
+                new_pos,
+                self.config.max_duration_s
+            );
+            self.current_pos_s = new_pos;
+        }
+
+        tracing::info!(
+            "=== Sliding window step {} (pos={:.0}s window={:.0}s step={:.0}s is_first={}) ===",
+            self.step_index,
+            self.current_pos_s,
+            self.config.window_s,
+            self.config.step_s,
+            is_first
+        );
+
+        // Build src_latents and chunk_masks
+        let (src_latents, chunk_masks) = if is_first {
+            // First step: all silence, all generate
+            let src = pipeline
+                .silence_latent()
+                .i((.., ..window_frames, ..))?
+                .contiguous()?;
+            let masks = Tensor::ones((1, window_frames, acoustic_dim), dtype, &device)?;
+            (src, masks)
+        } else {
+            let prev = self.window_latents.as_ref().unwrap();
+
+            // Shift: drop first step_frames, keep the rest, append silence tail
+            let keep_frames = window_frames - step_frames;
+            let kept = prev.i((.., step_frames.., ..))?.contiguous()?;
+            let silence_tail = pipeline
+                .silence_latent()
+                .i((.., ..step_frames, ..))?
+                .contiguous()?;
+            let src = Tensor::cat(&[&kept, &silence_tail], 1)?;
+
+            // Mask: 0 for kept region (model sees as context), 1 for new tail
+            let mask_keep = Tensor::zeros((1, keep_frames, acoustic_dim), dtype, &device)?;
+            let mask_gen = Tensor::ones((1, step_frames, acoustic_dim), dtype, &device)?;
+            let masks = Tensor::cat(&[&mask_keep, &mask_gen], 1)?;
+
+            (src, masks)
+        };
+
+        // Timbre: use the start of the current window as reference
+        let (refer_audio, refer_order) = if !is_first {
+            let prev = self.window_latents.as_ref().unwrap();
+            let ref_len = self.filled_frames.min(timbre_fix_frame);
+            let ref_latents = prev.i((.., ..ref_len, ..))?.contiguous()?;
+            let refer = if ref_len < timbre_fix_frame {
+                let pad = pipeline
+                    .silence_latent()
+                    .i((.., ..timbre_fix_frame - ref_len, ..))?
+                    .contiguous()?;
+                Tensor::cat(&[&ref_latents, &pad], 1)?
+            } else {
+                ref_latents
+            };
+            let order = Tensor::zeros((1,), DType::I64, &device)?;
+            (Some(refer), Some(order))
+        } else {
+            (None, None)
+        };
+
+        let metas_for_step = self.current_metas();
+        let params = GenerationParams {
+            caption: self.caption.clone(),
+            metas: metas_for_step,
+            lyrics: self.lyrics.clone(),
+            language: self.language.clone(),
+            duration_s: self.config.window_s, // ignored — src_latents drives size
+            shift: self.config.shift,
+            seed,
+            src_latents: Some(src_latents),
+            chunk_masks: Some(chunk_masks),
+            refer_audio,
+            refer_order,
+        };
+
+        let (full_audio, new_window_latents) = generate_with_latents(pipeline, &params)?;
+
+        // Extract only the new step's audio from the full window decode
+        let step_audio_samples = step_frames * Self::AUDIO_HOP;
+        let mut output_samples = if is_first {
+            // First step: output first step_frames of audio
+            full_audio.samples[..step_audio_samples.min(full_audio.samples.len())].to_vec()
+        } else {
+            // Subsequent steps: output last step_frames of audio (the new tail)
+            let start = full_audio.samples.len().saturating_sub(step_audio_samples);
+            full_audio.samples[start..].to_vec()
+        };
+
+        // --- Loudness normalization ------------------------------------------
+        // Re-normalize the output slice independently — the full-window peak
+        // normalize inside generate_with_latents uses the peak of the entire
+        // 240s window, which can crush the new 30s tail to near-silence.
+        //
+        // We use a smoothed peak that decays slowly across steps so adjacent
+        // steps have consistent loudness (no sudden jumps).
+        let step_peak = output_samples
+            .iter()
+            .map(|s| s.abs())
+            .fold(0.0f32, f32::max);
+        // Decay coefficient: smoothed_peak tracks toward step_peak.
+        // Alpha=0.4 → fast attack (loud steps bring it up quickly),
+        // slow release (quiet steps don't suddenly drop the volume).
+        let alpha = if step_peak > self.smoothed_peak {
+            0.6 // fast attack
+        } else {
+            0.15 // slow release
+        };
+        self.smoothed_peak = self.smoothed_peak + alpha * (step_peak - self.smoothed_peak);
+        let norm_peak = self.smoothed_peak.max(1e-6);
+        // Target 0.85 to leave some headroom.
+        let scale = 0.85 / norm_peak;
+        for s in &mut output_samples {
+            *s *= scale;
+        }
+
+        // --- Crossfade with previous step -----------------------------------
+        // Apply a short equal-power crossfade between the tail of the previous
+        // step and the head of this step.  This eliminates hard-cut clicks and
+        // smooths perceived style transitions at step boundaries.
+        const CROSSFADE_MS: usize = 400;
+        const CROSSFADE_SAMPLES: usize = 48000 * CROSSFADE_MS / 1000 * 2; // stereo
+        if !self.prev_tail.is_empty() && output_samples.len() >= CROSSFADE_SAMPLES {
+            let prev = &self.prev_tail;
+            let fade_len = prev.len().min(CROSSFADE_SAMPLES);
+            for i in 0..fade_len {
+                // Equal-power crossfade: cos²/sin² ramp
+                let t = i as f32 / fade_len as f32;
+                let angle = t * std::f32::consts::FRAC_PI_2;
+                let gain_prev = angle.cos();
+                let gain_next = angle.sin();
+                output_samples[i] =
+                    gain_prev * prev[prev.len() - fade_len + i] + gain_next * output_samples[i];
+            }
+        }
+        // Save tail for next step's crossfade
+        if output_samples.len() >= CROSSFADE_SAMPLES {
+            self.prev_tail = output_samples[output_samples.len() - CROSSFADE_SAMPLES..].to_vec();
+        } else {
+            self.prev_tail = output_samples.clone();
+        }
+
+        // Update window state
+        self.window_latents = Some(new_window_latents);
+        self.filled_frames = if is_first {
+            window_frames
+        } else {
+            window_frames // always full after first step
+        };
+
+        let step_s = self.config.step_s;
+        let window_s = self.config.window_s;
+        let step_index = self.step_index;
+        let pos_s = self.current_pos_s;
+
+        // Advance position for the next step (no-op in Fixed mode)
+        if self.config.position_mode == PositionMode::Advancing {
+            self.current_pos_s += step_s;
+        }
+        self.step_index += 1;
+
+        Ok(WindowStep {
+            audio: GeneratedAudio {
+                samples: output_samples,
+                sample_rate: 48000,
+                channels: 2,
+            },
+            step_index,
+            step_s,
+            window_s,
+            pos_s,
+        })
+    }
+
+    /// Reset: clear window state so the next step generates fresh.
+    /// Caption/lyrics/config are preserved.
+    pub fn restart(&mut self) {
+        self.window_latents = None;
+        self.filled_frames = 0;
+        self.step_index = 0;
+        self.current_pos_s = 0.0;
+        tracing::info!("SlidingWindowGenerator: restarted");
+    }
+
+    /// Save current window state as a named snapshot.
+    /// Returns `None` if no window has been generated yet.
+    pub fn save_snapshot(&self) -> Option<WindowSnapshot> {
+        self.window_latents.as_ref().map(|latents| WindowSnapshot {
+            latents: latents.clone(),
+            step_index: self.step_index,
+            pos_s: self.current_pos_s,
+        })
+    }
+
+    /// Restore a previously saved window snapshot.
+    /// The next step will generate from this window context.
+    pub fn load_snapshot(&mut self, snapshot: &WindowSnapshot) {
+        self.window_latents = Some(snapshot.latents.clone());
+        self.filled_frames = self.window_frames();
+        self.step_index = snapshot.step_index;
+        self.current_pos_s = snapshot.pos_s;
+        // Reset crossfade state: no prev_tail from a different point in time.
+        self.prev_tail.clear();
+        self.smoothed_peak = 0.0;
+        tracing::info!(
+            "SlidingWindowGenerator: loaded snapshot (step_index={} pos={:.0}s)",
+            self.step_index,
+            self.current_pos_s,
+        );
+    }
+}
+
+/// A saved window state that can be restored later.
+/// Use [`SlidingWindowGenerator::save_snapshot`] and
+/// [`SlidingWindowGenerator::load_snapshot`] to jump back to any
+/// point in the musical arc — e.g. back to an intro feel after an outro.
+pub struct WindowSnapshot {
+    /// The latent window at the time of saving [1, window_frames, 64].
+    latents: Tensor,
+    /// The step index at the time of saving.
+    pub step_index: usize,
+    /// The song position at the time of saving.
+    pub pos_s: f64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -800,5 +1327,47 @@ mod tests {
         }
         assert_eq!(sg.caption(), "rock guitar");
         assert_eq!(sg.lyrics(), "yeah yeah");
+    }
+
+    #[test]
+    fn test_sliding_window_config_defaults() {
+        let cfg = SlidingWindowConfig::default();
+        assert_eq!(cfg.window_s, 240.0);
+        assert_eq!(cfg.step_s, 30.0);
+        assert_eq!(cfg.shift, 3.0);
+    }
+
+    #[test]
+    fn test_sliding_window_frame_math() {
+        let cfg = SlidingWindowConfig {
+            window_s: 240.0,
+            step_s: 30.0,
+            ..Default::default()
+        };
+        let sg = SlidingWindowGenerator::new(cfg, "jazz", None, None, "4/4", "hello");
+        assert_eq!(sg.window_frames(), 6000); // 240 * 25
+        assert_eq!(sg.step_frames(), 750); // 30 * 25
+    }
+
+    #[test]
+    fn test_sliding_window_step_s_clamped() {
+        let cfg = SlidingWindowConfig {
+            window_s: 60.0,
+            step_s: 10.0,
+            ..Default::default()
+        };
+        let mut sg = SlidingWindowGenerator::new(cfg, "test", None, None, "4/4", "");
+        // step_s larger than window should be clamped
+        sg.apply_request(&ChunkRequest {
+            step_s: Some(999.0),
+            ..Default::default()
+        });
+        assert!(sg.config.step_s < sg.config.window_s);
+        // step_s = 0 should clamp to 1
+        sg.apply_request(&ChunkRequest {
+            step_s: Some(0.0),
+            ..Default::default()
+        });
+        assert_eq!(sg.config.step_s, 1.0);
     }
 }

@@ -45,6 +45,8 @@ zip = "2"
 
 # CLI audio playback + terminal input (behind "cli" feature)
 rodio = { version = "0.20", optional = true }
+cpal = { version = "0.15", optional = true }
+ringbuf = { version = "0.4", optional = true }
 crossterm = { version = "0.28", optional = true }
 tracing-subscriber = { version = "0.3", optional = true }
 ctrlc = { version = "3", optional = true }
@@ -59,7 +61,7 @@ default = ["cuda"]
 cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
 cudnn = ["cuda", "candle-core/cudnn"]
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
-cli = ["dep:rodio", "dep:crossterm", "dep:tracing-subscriber", "dep:ctrlc"]
+cli = ["dep:rodio", "dep:cpal", "dep:ringbuf", "dep:crossterm", "dep:tracing-subscriber", "dep:ctrlc"]
 
 [[example]]
 name = "stream_cli"
