@@ -519,7 +519,7 @@ fn apply_config_update(cfg: &mut StreamConfig, upd: &ConfigUpdate) {
 fn generator_thread(
     cmd_rx: mpsc::Receiver<GenCmd>,
     event_tx: mpsc::Sender<GenEvent>,
-    audio_tx: mpsc::SyncSender<Vec<f32>>,
+    audio_tx: mpsc::Sender<Vec<f32>>,
     initial_caption: String,
     initial_metas: String,
     initial_lyrics: String,
@@ -601,9 +601,6 @@ fn generator_thread(
                 Ok(chunk) => {
                     let gen_time = t0.elapsed().as_secs_f64();
                     let audio_samples = chunk.audio.samples.len();
-                    // Blocking send — waits for the sink to consume the previous chunk.
-                    // This is intentional: generation runs ~25x faster than playback,
-                    // so we let the sink pace us.
                     if audio_tx.send(chunk.audio.samples).is_err() {
                         return;
                     }
@@ -690,7 +687,7 @@ fn main() {
     // Channels
     let (cmd_tx, cmd_rx) = mpsc::channel::<GenCmd>();
     let (event_tx, event_rx) = mpsc::channel::<GenEvent>();
-    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(1);
+    let (audio_tx, audio_rx) = mpsc::channel::<Vec<f32>>();
 
     // Audio output
     let playback_consumed = Arc::new(AtomicUsize::new(0));
