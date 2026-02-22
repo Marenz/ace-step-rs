@@ -219,12 +219,12 @@ impl CrossAttention {
                 let q_mask = q_mask.unsqueeze(1)?.unsqueeze(3)?;
                 let k_mask = k_mask.unsqueeze(1)?.unsqueeze(2)?;
                 let combined = q_mask.broadcast_mul(&k_mask)?;
-                // Where combined == 0, set to -inf
-                let neg_inf = Tensor::full(f32::NEG_INFINITY, combined.shape(), combined.device())?
-                    .to_dtype(attn_weights.dtype())?;
-                let zeros = Tensor::zeros_like(&neg_inf)?;
-                let bias = combined.where_cond(&zeros, &neg_inf)?;
-                (attn_weights + bias)?
+                // Where combined == 0, set to -inf.
+                // Build additive bias: 0 where mask=1, -inf where mask=0.
+                // (mask - 1) * inf gives -inf for 0s and 0 for 1s.
+                let bias = ((combined - 1.0)? * f64::INFINITY)?;
+                let bias = bias.to_dtype(attn_weights.dtype())?;
+                attn_weights.broadcast_add(&bias)?
             }
             _ => attn_weights,
         };
