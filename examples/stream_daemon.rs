@@ -541,7 +541,7 @@ fn apply_config_update(cfg: &mut StreamConfig, upd: &ConfigUpdate) {
 fn generator_thread(
     cmd_rx: mpsc::Receiver<GenCmd>,
     event_tx: mpsc::Sender<GenEvent>,
-    audio_tx: mpsc::Sender<Vec<f32>>,
+    audio_tx: mpsc::SyncSender<Vec<f32>>,
     initial_caption: String,
     initial_metas: String,
     initial_lyrics: String,
@@ -716,7 +716,9 @@ fn main() {
     // Channels
     let (cmd_tx, cmd_rx) = mpsc::channel::<GenCmd>();
     let (event_tx, event_rx) = mpsc::channel::<GenEvent>();
-    let (audio_tx, audio_rx) = mpsc::channel::<Vec<f32>>();
+    // 3-chunk buffer: ~66s ahead of playback. Generator blocks when full,
+    // keeping memory bounded and captions changes responsive.
+    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(3);
 
     // Audio output
     let playback_consumed = Arc::new(AtomicUsize::new(0));

@@ -516,7 +516,7 @@ fn parse_input(line: &str) -> ParsedInput {
 fn generator_thread(
     cmd_rx: mpsc::Receiver<GenCmd>,
     result_tx: mpsc::Sender<GenResult>,
-    audio_tx: mpsc::Sender<Vec<f32>>,
+    audio_tx: mpsc::SyncSender<Vec<f32>>,
     initial_caption: String,
     initial_metas: String,
     initial_lyrics: String,
@@ -722,7 +722,7 @@ fn run() -> ace_step_rs::Result<()> {
         OutputStream::try_default().expect("failed to open audio output");
     let sink = Sink::try_new(&stream_handle).expect("failed to create audio sink");
 
-    let (audio_tx, audio_rx) = mpsc::channel::<Vec<f32>>();
+    let (audio_tx, audio_rx) = mpsc::sync_channel::<Vec<f32>>(3);
     let source = ChannelSource::new(audio_rx, 2, 48000, playback_counter);
     sink.append(source);
 
