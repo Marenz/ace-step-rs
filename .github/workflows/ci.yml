@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Check & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Candle deps use local path refs that don't exist in CI.
+      # Swap them for the matching crates.io release.
+      - name: Patch candle deps for CI
+        run: |
+          sed -i 's|candle-core = { path = "[^"]*" }|candle-core = "0.9"|' Cargo.toml
+          sed -i 's|candle-nn = { path = "[^"]*" }|candle-nn = "0.9"|' Cargo.toml
+          sed -i 's|candle-transformers = { path = "[^"]*" }|candle-transformers = "0.9"|' Cargo.toml
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Build (CPU only)
+        run: cargo build --no-default-features
+
+      - name: Run tests
+        run: cargo test --no-default-features
+
+      - name: Clippy
+        run: cargo clippy --no-default-features -- -D warnings
