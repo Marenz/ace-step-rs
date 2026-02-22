@@ -238,7 +238,18 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis())
             .unwrap_or(0);
-        format!("/tmp/ace-step-{ts}.ogg")
+        let spool = dirs::data_local_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("/tmp"))
+            .join("ace-step/spool");
+        // Ensure spool dir exists; fall back to /tmp on error.
+        if std::fs::create_dir_all(&spool).is_ok() {
+            spool
+                .join(format!("{ts}.ogg"))
+                .to_string_lossy()
+                .into_owned()
+        } else {
+            format!("/tmp/ace-step-{ts}.ogg")
+        }
     });
 
     // Validate extension.
