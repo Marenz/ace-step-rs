@@ -98,4 +98,8 @@ name = "stream_daemon"
 required-features = ["cli"]
 
 [[example]]
+name = "radio_daemon"
+required-features = ["cli"]
+
+[[example]]
 name = "generation_daemon"

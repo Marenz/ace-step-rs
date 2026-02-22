@@ -108,6 +108,7 @@ impl Default for GenerationParams {
 }
 
 /// Generated audio output.
+#[derive(Clone)]
 pub struct GeneratedAudio {
     /// Stereo waveform samples, interleaved [L, R, L, R, ...]
     pub samples: Vec<f32>,

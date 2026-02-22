@@ -25,6 +25,7 @@ pub mod config;
 pub mod manager;
 pub mod model;
 pub mod pipeline;
+pub mod radio;
 pub mod streaming;
 pub mod vae;
 
