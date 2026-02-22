@@ -39,6 +39,10 @@ pub enum Error {
     /// HuggingFace Hub error.
     #[error("hf-hub: {0}")]
     HfHub(String),
+
+    /// Generation manager error.
+    #[error("manager: {0}")]
+    Manager(String),
 }
 
 /// Wrapper for tokenizer errors (tokenizers::Error doesn't impl std::error::Error).

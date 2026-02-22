@@ -37,11 +37,17 @@ hf-hub = "0.4"
 # Float16
 half = "2"
 
+# CUDA runtime (VRAM queries) — only used when the cuda feature is enabled
+cudarc = { version = "0.19.1", features = ["runtime", "cuda-version-from-build-system", "dynamic-linking"], optional = true }
+
 # Numerical traits
 num-traits = "0.2"
 
 # Zip archive reading (for loading .pt files)
 zip = "2"
+
+# Async runtime (GenerationManager uses tokio channels + spawn_blocking)
+tokio = { version = "1", features = ["rt", "sync", "macros"] }
 
 # CLI argument parsing (binary only)
 clap = { version = "4", features = ["derive"] }
@@ -56,7 +62,7 @@ tempfile = "3"
 
 [features]
 default = ["cuda"]
-cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda"]
+cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda", "dep:cudarc"]
 cudnn = ["cuda", "candle-core/cudnn"]
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
 
