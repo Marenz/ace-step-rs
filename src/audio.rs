@@ -19,7 +19,6 @@ pub enum AudioFormat {
 }
 
 impl AudioFormat {
-    /// Parse from string (wav, ogg).
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "wav" => Some(Self::Wav),
@@ -28,7 +27,6 @@ impl AudioFormat {
         }
     }
 
-    /// Get file extension.
     pub fn extension(&self) -> &'static str {
         match self {
             Self::Wav => "wav",
@@ -41,6 +39,17 @@ impl std::fmt::Display for AudioFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.extension())
     }
+}
+
+/// Write interleaved f32 samples to a writer in OGG format.
+#[cfg(feature = "audio-ogg")]
+pub fn write_ogg_to<W: std::io::Write>(
+    writer: W,
+    samples: &[f32],
+    sample_rate: u32,
+    num_channels: u16,
+) -> crate::Result<()> {
+    ogg::write_ogg_to(writer, samples, sample_rate, num_channels)
 }
 
 /// Write interleaved f32 samples to the specified format.
