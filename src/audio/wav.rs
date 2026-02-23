@@ -176,7 +176,7 @@ mod tests {
         let prev = vec![1.0f32; 16]; // 8 stereo frames
         let next = vec![0.0f32; 16];
         let result = crossfade(&prev, &next, 4, 2); // 4-frame crossfade
-                                                    // (16-8) + 8 + (16-8) = 24
+        // (16-8) + 8 + (16-8) = 24
         assert_eq!(result.len(), 24);
     }
 

@@ -6,7 +6,7 @@
 //!
 //! Uses weight-norm loading via `candle_transformers::models::encodec`.
 
-use candle_core::{IndexOp, Module, Result, Tensor, D};
+use candle_core::{D, IndexOp, Module, Result, Tensor};
 use candle_nn::{Conv1d, Conv1dConfig, ConvTranspose1d, ConvTranspose1dConfig, VarBuilder};
 use candle_transformers::models::encodec;
 
