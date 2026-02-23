@@ -97,3 +97,7 @@ required-features = ["cli"]
 name = "generation-daemon"
 path = "src/bin/generation-daemon.rs"
 required-features = ["audio-ogg"]
+
+[[bin]]
+name = "ace-step-client"
+path = "src/bin/ace-step-client.rs"
