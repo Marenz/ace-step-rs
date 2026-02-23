@@ -41,13 +41,16 @@
 //! ```
 
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 
 use ace_step_rs::{
     audio::write_audio,
     manager::{GenerationManager, ManagerConfig},
+    model::lm_planner::LmPlanner,
     pipeline::GenerationParams,
 };
 use clap::Parser;
+use hf_hub::api::sync::Api;
 use serde::{Deserialize, Serialize};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -69,6 +72,13 @@ struct Args {
     /// CUDA device ordinal (0 = first GPU).
     #[arg(long, default_value_t = 0)]
     device: usize,
+
+    /// Load the 5Hz LM planner and use it to expand captions before generation.
+    ///
+    /// Adds ~3.5GB VRAM usage. When enabled, the LM rewrites the caption and
+    /// fills in BPM, key/scale, time signature, and duration from the text.
+    #[arg(long, default_value_t = false)]
+    use_lm: bool,
 }
 
 // ── Wire types ───────────────────────────────────────────────────────────────
@@ -87,8 +97,9 @@ struct Request {
     #[serde(default = "default_language")]
     language: String,
 
-    #[serde(default = "default_duration")]
-    duration_s: f64,
+    /// Duration in seconds. When absent the LM planner may suggest one; otherwise defaults to 30.
+    #[serde(default)]
+    duration_s: Option<f64>,
 
     #[serde(default = "default_shift")]
     shift: f64,
@@ -105,9 +116,7 @@ struct Request {
 fn default_language() -> String {
     "en".into()
 }
-fn default_duration() -> f64 {
-    30.0
-}
+
 fn default_shift() -> f64 {
     3.0
 }
@@ -167,22 +176,53 @@ async fn main() -> anyhow::Result<()> {
         std::fs::remove_file(&args.socket)?;
     }
 
-    tracing::info!("Loading ACE-Step pipeline (this may take a minute on first run)...");
+    // Bind the socket immediately so callers can connect right away.
+    // Connections that arrive before loading completes will wait in the channel.
+    let listener = UnixListener::bind(&args.socket)?;
+    tracing::info!("Listening on {:?} (loading pipeline...)", args.socket);
+
+    // When the LM planner is resident it consumes ~3.5GB, so the pipeline
+    // itself only needs ~6.3GB — leave 512MB headroom instead of the default 2GB.
+    let min_free_vram_bytes = if args.use_lm {
+        512 * 1024 * 1024
+    } else {
+        ManagerConfig::default().min_free_vram_bytes
+    };
     let config = ManagerConfig {
         cuda_device: args.device,
+        min_free_vram_bytes,
         ..ManagerConfig::default()
     };
     let manager = GenerationManager::start(config).await?;
-    tracing::info!("Pipeline ready. Listening on {:?}", args.socket);
 
-    let listener = UnixListener::bind(&args.socket)?;
+    // Optionally load the LM planner (blocking, on the current thread).
+    let lm_planner: Option<Arc<Mutex<LmPlanner>>> = if args.use_lm {
+        tracing::info!("Loading 5Hz LM planner...");
+        let device = ace_step_rs::manager::preferred_device(args.device);
+        let planner = tokio::task::spawn_blocking(move || -> anyhow::Result<LmPlanner> {
+            let api = Api::new()?;
+            let repo = api.model("ACE-Step/Ace-Step1.5".to_string());
+            let weights = repo.get("acestep-5Hz-lm-1.7B/model.safetensors")?;
+            let tokenizer = repo.get("acestep-5Hz-lm-1.7B/tokenizer.json")?;
+            let planner = LmPlanner::load(&weights, &tokenizer, &device, candle_core::DType::BF16)?;
+            Ok(planner)
+        })
+        .await??;
+        tracing::info!("LM planner ready");
+        Some(Arc::new(Mutex::new(planner)))
+    } else {
+        None
+    };
+
+    tracing::info!("Pipeline ready");
 
     loop {
         match listener.accept().await {
             Ok((stream, _addr)) => {
                 let manager = manager.clone();
+                let lm = lm_planner.clone();
                 tokio::spawn(async move {
-                    if let Err(e) = handle_connection(stream, manager).await {
+                    if let Err(e) = handle_connection(stream, manager, lm).await {
                         tracing::warn!("connection error: {e}");
                     }
                 });
@@ -196,7 +236,11 @@ async fn main() -> anyhow::Result<()> {
 
 // ── Connection handler ────────────────────────────────────────────────────────
 
-async fn handle_connection(stream: UnixStream, manager: GenerationManager) -> anyhow::Result<()> {
+async fn handle_connection(
+    stream: UnixStream,
+    manager: GenerationManager,
+    lm: Option<Arc<Mutex<LmPlanner>>>,
+) -> anyhow::Result<()> {
     let (reader, mut writer) = stream.into_split();
     let mut lines = BufReader::new(reader).lines();
 
@@ -209,12 +253,16 @@ async fn handle_connection(stream: UnixStream, manager: GenerationManager) -> an
         }
     };
 
-    let response = process_request(&line, &manager).await;
+    let response = process_request(&line, &manager, lm).await;
     send_response(&mut writer, response).await?;
     Ok(())
 }
 
-async fn process_request(line: &str, manager: &GenerationManager) -> Response {
+async fn process_request(
+    line: &str,
+    manager: &GenerationManager,
+    lm: Option<Arc<Mutex<LmPlanner>>>,
+) -> Response {
     // Parse request.
     let req: Request = match serde_json::from_str(line) {
         Ok(r) => r,
@@ -225,11 +273,12 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
     if req.caption.trim().is_empty() {
         return Response::err("'caption' field is required and must not be empty");
     }
-    if req.duration_s < 1.0 || req.duration_s > 600.0 {
-        return Response::err(format!(
-            "duration_s must be between 1 and 600, got {}",
-            req.duration_s
-        ));
+    if let Some(d) = req.duration_s {
+        if d < 1.0 || d > 600.0 {
+            return Response::err(format!(
+                "duration_s must be between 1 and 600, got {d}"
+            ));
+        }
     }
 
     // Resolve output path.
@@ -272,12 +321,59 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
         }
     }
 
+    // Optionally run the LM planner to expand the caption into structured metadata.
+    // Resolve duration: user value takes priority; LM suggestion used only when omitted.
+    const DEFAULT_DURATION: f64 = 30.0;
+    let user_duration = req.duration_s; // None = user did not specify
+
+    let (caption, metas, language, duration_s) =
+        if let Some(lm_arc) = lm {
+            let caption = req.caption.clone();
+            let lyrics = req.lyrics.clone();
+            let lm_fallback_duration = user_duration.unwrap_or(DEFAULT_DURATION);
+            let result = tokio::task::spawn_blocking(move || {
+                let mut planner = lm_arc.lock().unwrap();
+                planner.plan(&caption, &lyrics, 512, 0.0)
+            })
+            .await;
+
+            match result {
+                Ok(Ok(plan)) => {
+                    tracing::info!(
+                        bpm = ?plan.bpm,
+                        keyscale = ?plan.keyscale,
+                        language = ?plan.language,
+                        lm_duration_s = ?plan.duration_s,
+                        "LM planner output"
+                    );
+                    let metas = plan.to_metas_string(lm_fallback_duration);
+                    let caption = plan.caption.unwrap_or(req.caption);
+                    let language = plan.language.unwrap_or(req.language);
+                    // User-specified duration always wins; LM suggestion only if user omitted it.
+                    let duration_s = user_duration
+                        .or_else(|| plan.duration_s.map(|d| d as f64))
+                        .unwrap_or(DEFAULT_DURATION);
+                    (caption, metas, language, duration_s)
+                }
+                Ok(Err(e)) => {
+                    tracing::warn!("LM planner failed, falling back to raw caption: {e}");
+                    (req.caption, req.metas, req.language, user_duration.unwrap_or(DEFAULT_DURATION))
+                }
+                Err(e) => {
+                    tracing::warn!("LM planner task panicked, falling back: {e}");
+                    (req.caption, req.metas, req.language, user_duration.unwrap_or(DEFAULT_DURATION))
+                }
+            }
+        } else {
+            (req.caption, req.metas, req.language, user_duration.unwrap_or(DEFAULT_DURATION))
+        };
+
     let params = GenerationParams {
-        caption: req.caption,
-        metas: req.metas,
+        caption,
+        metas,
         lyrics: req.lyrics,
-        language: req.language,
-        duration_s: req.duration_s,
+        language,
+        duration_s,
         shift: req.shift,
         seed: req.seed,
         src_latents: None,
@@ -315,12 +411,7 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
 
     tracing::info!(output = %output_path, "done");
 
-    Response::ok(
-        output_path,
-        req.duration_s,
-        audio.sample_rate,
-        audio.channels,
-    )
+    Response::ok(output_path, duration_s, audio.sample_rate, audio.channels)
 }
 
 async fn send_response(
