@@ -275,9 +275,7 @@ async fn process_request(
     }
     if let Some(d) = req.duration_s {
         if d < 1.0 || d > 600.0 {
-            return Response::err(format!(
-                "duration_s must be between 1 and 600, got {d}"
-            ));
+            return Response::err(format!("duration_s must be between 1 and 600, got {d}"));
         }
     }
 
@@ -326,47 +324,61 @@ async fn process_request(
     const DEFAULT_DURATION: f64 = 30.0;
     let user_duration = req.duration_s; // None = user did not specify
 
-    let (caption, metas, language, duration_s) =
-        if let Some(lm_arc) = lm {
-            let caption = req.caption.clone();
-            let lyrics = req.lyrics.clone();
-            let lm_fallback_duration = user_duration.unwrap_or(DEFAULT_DURATION);
-            let result = tokio::task::spawn_blocking(move || {
-                let mut planner = lm_arc.lock().unwrap();
-                planner.plan(&caption, &lyrics, 512, 0.0)
-            })
-            .await;
+    let (caption, metas, language, duration_s) = if let Some(lm_arc) = lm {
+        let caption = req.caption.clone();
+        let lyrics = req.lyrics.clone();
+        let lm_fallback_duration = user_duration.unwrap_or(DEFAULT_DURATION);
+        let result = tokio::task::spawn_blocking(move || {
+            let mut planner = lm_arc.lock().unwrap();
+            planner.plan(&caption, &lyrics, 512, 0.0)
+        })
+        .await;
 
-            match result {
-                Ok(Ok(plan)) => {
-                    tracing::info!(
-                        bpm = ?plan.bpm,
-                        keyscale = ?plan.keyscale,
-                        language = ?plan.language,
-                        lm_duration_s = ?plan.duration_s,
-                        "LM planner output"
-                    );
-                    let metas = plan.to_metas_string(lm_fallback_duration);
-                    let caption = plan.caption.unwrap_or(req.caption);
-                    let language = plan.language.unwrap_or(req.language);
-                    // User-specified duration always wins; LM suggestion only if user omitted it.
-                    let duration_s = user_duration
-                        .or_else(|| plan.duration_s.map(|d| d as f64))
-                        .unwrap_or(DEFAULT_DURATION);
-                    (caption, metas, language, duration_s)
-                }
-                Ok(Err(e)) => {
-                    tracing::warn!("LM planner failed, falling back to raw caption: {e}");
-                    (req.caption, req.metas, req.language, user_duration.unwrap_or(DEFAULT_DURATION))
-                }
-                Err(e) => {
-                    tracing::warn!("LM planner task panicked, falling back: {e}");
-                    (req.caption, req.metas, req.language, user_duration.unwrap_or(DEFAULT_DURATION))
-                }
+        match result {
+            Ok(Ok(plan)) => {
+                tracing::info!(
+                    bpm = ?plan.bpm,
+                    keyscale = ?plan.keyscale,
+                    language = ?plan.language,
+                    lm_duration_s = ?plan.duration_s,
+                    "LM planner output"
+                );
+                let metas = plan.to_metas_string(lm_fallback_duration);
+                let caption = plan.caption.unwrap_or(req.caption);
+                let language = plan.language.unwrap_or(req.language);
+                // User-specified duration always wins; LM suggestion only if user omitted it.
+                let duration_s = user_duration
+                    .or_else(|| plan.duration_s.map(|d| d as f64))
+                    .unwrap_or(DEFAULT_DURATION);
+                (caption, metas, language, duration_s)
             }
-        } else {
-            (req.caption, req.metas, req.language, user_duration.unwrap_or(DEFAULT_DURATION))
-        };
+            Ok(Err(e)) => {
+                tracing::warn!("LM planner failed, falling back to raw caption: {e}");
+                (
+                    req.caption,
+                    req.metas,
+                    req.language,
+                    user_duration.unwrap_or(DEFAULT_DURATION),
+                )
+            }
+            Err(e) => {
+                tracing::warn!("LM planner task panicked, falling back: {e}");
+                (
+                    req.caption,
+                    req.metas,
+                    req.language,
+                    user_duration.unwrap_or(DEFAULT_DURATION),
+                )
+            }
+        }
+    } else {
+        (
+            req.caption,
+            req.metas,
+            req.language,
+            user_duration.unwrap_or(DEFAULT_DURATION),
+        )
+    };
 
     let params = GenerationParams {
         caption,

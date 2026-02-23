@@ -52,12 +52,8 @@ use crate::{Error, Result};
 
 // ── Token IDs (Qwen2/Qwen3 special tokens) ────────────────────────────────────
 
-/// `<|im_start|>` — role-tag open
-const TOK_IM_START: u32 = 151644;
 /// `<|im_end|>` — role-tag close (also EOS for generation)
 const TOK_IM_END: u32 = 151645;
-/// `<think>` — start of chain-of-thought
-const TOK_THINK_OPEN: u32 = 151667;
 /// `</think>` — end of chain-of-thought; we stop here
 const TOK_THINK_CLOSE: u32 = 151668;
 
@@ -127,7 +123,9 @@ impl PlannerOutput {
         } else {
             "N/A".to_string()
         };
-        format!("- bpm: {bpm_str}\n- timesignature: {ts}\n- keyscale: {ks_str}\n- duration: {dur_str}\n")
+        format!(
+            "- bpm: {bpm_str}\n- timesignature: {ts}\n- keyscale: {ks_str}\n- duration: {dur_str}\n"
+        )
     }
 }
 
@@ -139,7 +137,6 @@ pub struct LmPlanner {
     model: qwen3::ModelForCausalLM,
     tokenizer: Tokenizer,
     device: Device,
-    dtype: DType,
 }
 
 impl LmPlanner {
@@ -176,7 +173,6 @@ impl LmPlanner {
             model,
             tokenizer,
             device: device.clone(),
-            dtype,
         })
     }
 
