@@ -117,6 +117,7 @@ src/
 │   │   ├── fsq.rs                  — ResidualFsq (stub, cover mode only)
 │   │   ├── pooler.rs               — AttentionPooler (25Hz→5Hz)
 │   │   └── detokenizer.rs          — AudioTokenDetokenizer (5Hz→25Hz)
+│   ├── lm_planner.rs               — LmPlanner (5Hz LM CoT-only), PlannerOutput
 │   └── generation.rs               — AceStepConditionGenerationModel (ODE loop)
 ├── vae.rs                          — OobleckDecoder (Snake1d α+β, weight_norm)
 └── pipeline.rs                     — end-to-end inference (stub)
@@ -155,24 +156,28 @@ Module roots (e.g., `src/audio.rs`) contain `mod` declarations and re-exports. N
 **Socket:** `/tmp/ace-step-gen.sock` (default). Override with `--socket`.
 
 **Protocol:**
-- Request: `{"caption":"...", "output":"/tmp/out.ogg", "duration_s":30, ...}` + newline
+- Request: `{"caption":"...", "output":"/tmp/out.ogg", "duration_s":30, "lyrics":"...", "metas":"...", "language":"en", "shift":3.0, "seed":null}` + newline
 - Response success: `{"ok":true, "path":"...", "duration_s":30, "sample_rate":48000, "channels":2}` + newline
 - Response error: `{"ok":false, "error":"..."}` + newline
+
+**LM planner flag:** Pass `--use-lm` to load the 5Hz LM planner (1.7B, ~3.5GB VRAM). When active, the LM rewrites the caption and fills in BPM, key/scale, time signature, and language before the DiT runs. User-specified `duration_s` always takes priority; the LM suggestion is only used when duration is omitted. Recommended for best quality.
+
+**Socket bind:** The socket is bound before model loading completes, so the socket file appears within ~1s of startup. Connections that arrive during loading queue in the channel and are served once the pipeline is ready.
 
 **Build:**
 ```bash
 LIBRARY_PATH=/usr/lib64:$LIBRARY_PATH PATH="/usr/local/cuda-12.4/bin:$PATH" \
 CUDA_HOME=/usr/local/cuda-12.4 NVCC_CCBIN=/usr/bin/g++-13 CPLUS_INCLUDE_PATH="/tmp/cuda-shim" \
-cargo build --release --example generation_daemon --features audio-ogg
+cargo build --release --features audio-all
 ```
 
-**Binary location:** `target/release/examples/generation_daemon`
+**Binary location:** `target/release/generation-daemon`
 
 **Systemd unit:** `~/.config/systemd/user/ace-step-gen.service` (enabled, auto-starts)
 
 **Skill:** `~/.spacebot/skills/generate_music/SKILL.md` — instructs the worker to talk to the daemon socket via `socat`, with CLI binary fallback.
 
-**Design rationale:** `stream_daemon` (also in this repo) is for live/continuous playback to speakers. `generation_daemon` is for one-shot file generation: user asks for a track, gets a file. The `GenerationManager` (`src/manager.rs`) handles the resident pipeline with OOM retry; `generation_daemon` just wraps it with a socket interface.
+**Design rationale:** `generation_daemon` is for one-shot file generation: user asks for a track, gets a file. The `GenerationManager` (`src/manager.rs`) handles the resident pipeline with OOM retry; `generation_daemon` wraps it with a socket interface. The optional LM planner runs before each request (no separate socket — same process).
 
 ## Reference Repositories
 
