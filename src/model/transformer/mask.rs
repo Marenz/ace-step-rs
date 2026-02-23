@@ -40,7 +40,7 @@ pub fn create_4d_mask(
 
             // Sliding window: bidirectional local attention
             if let Some(w) = sliding_window {
-                let diff = if i >= j { i - j } else { j - i };
+                let diff = i.abs_diff(j);
                 if diff > w {
                     masked = true;
                 }

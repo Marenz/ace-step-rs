@@ -23,7 +23,7 @@ pub enum AudioFormat {
 }
 
 impl AudioFormat {
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "wav" => Some(Self::Wav),
             "ogg" | "vorbis" => Some(Self::Ogg),
@@ -72,7 +72,7 @@ pub fn write_audio(
         .unwrap_or("wav")
         .to_lowercase();
 
-    match AudioFormat::from_str(&ext) {
+    match AudioFormat::parse(&ext) {
         Some(AudioFormat::Wav) => write_wav(path, samples, sample_rate, num_channels),
         #[cfg(feature = "audio-ogg")]
         Some(AudioFormat::Ogg) => ogg::write_ogg(path, samples, sample_rate, num_channels),

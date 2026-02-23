@@ -10,6 +10,7 @@ use candle_core::{Result, Tensor};
 /// For inference we only need the forward pass (quantize) and
 /// `get_output_from_indices` (decode codes back to continuous).
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ResidualFsq {
     /// Project from hidden_size to FSQ dim
     project_in: Option<candle_nn::Linear>,

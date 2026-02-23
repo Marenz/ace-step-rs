@@ -2,7 +2,7 @@
 
 use crate::Result;
 use std::io::Write;
-use std::num::{NonZeroU8, NonZeroU32};
+use std::num::{NonZeroU32, NonZeroU8};
 
 pub fn write_ogg_to<W: Write>(
     writer: W,

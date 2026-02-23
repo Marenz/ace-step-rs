@@ -6,7 +6,7 @@
 //!
 //! Uses weight-norm loading via `candle_transformers::models::encodec`.
 
-use candle_core::{D, IndexOp, Module, Result, Tensor};
+use candle_core::{IndexOp, Module, Result, Tensor, D};
 use candle_nn::{Conv1d, Conv1dConfig, ConvTranspose1d, ConvTranspose1dConfig, VarBuilder};
 use candle_transformers::models::encodec;
 
@@ -262,7 +262,7 @@ impl OobleckDecoder {
         let stride = chunk_size - 2 * overlap;
         assert!(stride > 0, "chunk_size must be > 2 * overlap");
 
-        let num_steps = (latent_frames + stride - 1) / stride;
+        let num_steps = latent_frames.div_ceil(stride);
         let mut decoded_chunks: Vec<Tensor> = Vec::with_capacity(num_steps);
         let mut upsample_factor: Option<f64> = None;
 

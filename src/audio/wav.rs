@@ -50,6 +50,7 @@ pub fn write_wav(
 }
 
 /// Peak-normalize audio samples to [-1, 1].
+#[allow(dead_code)]
 pub fn peak_normalize(samples: &mut [f32]) {
     let max_abs = samples.iter().map(|s| s.abs()).fold(0.0f32, f32::max);
     if max_abs > 1e-8 {
@@ -175,7 +176,7 @@ mod tests {
         let prev = vec![1.0f32; 16]; // 8 stereo frames
         let next = vec![0.0f32; 16];
         let result = crossfade(&prev, &next, 4, 2); // 4-frame crossfade
-        // (16-8) + 8 + (16-8) = 24
+                                                    // (16-8) + 8 + (16-8) = 24
         assert_eq!(result.len(), 24);
     }
 

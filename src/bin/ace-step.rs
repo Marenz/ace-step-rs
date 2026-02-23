@@ -91,15 +91,15 @@ fn main() -> anyhow::Result<()> {
         .and_then(|e| e.to_str())
         .unwrap_or("wav");
 
-    if ace_step_rs::audio::AudioFormat::from_str(ext).is_none() {
+    if ace_step_rs::audio::AudioFormat::parse(ext).is_none() {
         anyhow::bail!("unsupported output format '{}'. Use .wav or .ogg", ext);
     }
 
     // Ensure output directory exists
-    if let Some(parent) = output_path.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = output_path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)?;
     }
 
     let device = candle_core::Device::cuda_if_available(0)?;

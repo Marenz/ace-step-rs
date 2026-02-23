@@ -14,6 +14,7 @@ use crate::model::transformer::mask::create_4d_mask;
 
 /// Timbre encoder matching Python `AceStepTimbreEncoder`.
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AceStepTimbreEncoder {
     embed_tokens: nn::Linear,
     norm: RmsNorm,
@@ -125,9 +126,9 @@ impl AceStepTimbreEncoder {
         }
 
         // Build mask
-        for bid in 0..b {
+        for count in &counts {
             for pos in 0..max_count {
-                mask_vals.push(if pos < counts[bid] { 1i64 } else { 0i64 });
+                mask_vals.push(if pos < *count { 1i64 } else { 0i64 });
             }
         }
 

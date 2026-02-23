@@ -257,7 +257,7 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or("wav");
-    if ace_step_rs::audio::AudioFormat::from_str(ext).is_none() {
+    if ace_step_rs::audio::AudioFormat::parse(ext).is_none() {
         return Response::err(format!(
             "unsupported output format '{ext}'. Use .wav or .ogg"
         ));

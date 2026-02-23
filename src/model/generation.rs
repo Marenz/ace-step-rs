@@ -23,6 +23,7 @@ pub struct GenerationOutput {
 pub struct AceStepConditionGenerationModel {
     decoder: AceStepDiTModel,
     encoder: AceStepConditionEncoder,
+    #[allow(dead_code)]
     null_condition_emb: Tensor, // [1, 1, hidden_size]
     cfg: AceStepConfig,
 }
@@ -87,6 +88,7 @@ impl AceStepConditionGenerationModel {
     /// Generate audio latents from text/lyrics/timbre conditions.
     ///
     /// Returns latents [B, T, 64] at 25Hz, ready for VAE decoding.
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_audio(
         &self,
         text_hidden_states: &Tensor,

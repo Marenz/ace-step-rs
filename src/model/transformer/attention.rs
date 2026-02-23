@@ -128,6 +128,7 @@ pub struct AceStepAttention {
     head_dim: usize,
     scaling: f64,
     is_cross_attention: bool,
+    #[allow(dead_code)]
     sliding_window: Option<usize>,
 }
 

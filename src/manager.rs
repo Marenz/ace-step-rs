@@ -190,6 +190,7 @@ fn maybe_proactive_offload(pipeline: AceStepPipeline, config: &ManagerConfig) ->
 ///
 /// On success returns the CPU pipeline.
 /// On failure returns the original error and a recovered pipeline (reloaded on GPU).
+#[allow(clippy::result_large_err)]
 fn offload_to_cpu(
     pipeline: AceStepPipeline,
     config: &ManagerConfig,
