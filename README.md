@@ -169,13 +169,19 @@ systemctl --user enable --now ace-step-gen
 
 ## Performance
 
-Benchmarked on RTX 3090 (24GB), F32 + TF32 tensor cores. Uses the [cuDNN ConvTranspose1d patch](https://github.com/huggingface/candle/pull/3383).
+Benchmarked on RTX 3090 (24GB), F32 + TF32 tensor cores. Rust uses the [cuDNN ConvTranspose1d patch](https://github.com/huggingface/candle/pull/3383).
 
 | Duration | Python (PyTorch) | Rust (candle) | Ratio |
 |----------|-----------------|---------------|-------|
-| 10s | 0.88s | 0.59s | **1.5x faster** |
+| 10s | 0.88s | 0.67s | **1.3x faster** |
 | 30s | 1.38s | 1.25s | **1.1x faster** |
+| 1 min | 2.65s | 2.33s | **1.1x faster** |
+| 2 min | 4.75s | 5.19s | 1.1x slower |
 | 4 min | 9.26s | 12.04s | 1.3x slower |
+| 6 min | 15.33s | 21.36s | 1.4x slower |
+| 7 min | 19.13s | 27.68s | 1.4x slower |
+| 8 min | 22.70s | OOM | — |
+| 10 min | 30.79s | OOM | — |
 
 <details>
 <summary>Per-stage breakdown (30s)</summary>
@@ -188,7 +194,7 @@ Benchmarked on RTX 3090 (24GB), F32 + TF32 tensor cores. Uses the [cuDNN ConvTra
 
 </details>
 
-Rust wins at short/medium durations. At longer durations PyTorch's Cutlass tensor-core VAE kernels (cuDNN v9 engine API) give it an edge. Without the [candle patch](https://github.com/huggingface/candle/pull/3383), VAE decode is ~3s (100x slower ConvTranspose1d).
+Rust wins up to ~1 min. Beyond that, PyTorch's Cutlass tensor-core VAE kernels (cuDNN v9 engine API) and better memory efficiency give it an edge — Rust OOMs on 24GB at 8+ minutes while Python handles the full 10 minutes. Without the [candle patch](https://github.com/huggingface/candle/pull/3383), VAE decode is ~3s at 30s (100x slower ConvTranspose1d).
 
 ## Running Tests
 
