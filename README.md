@@ -132,6 +132,14 @@ Note: Metal support is provided by candle but has not been tested with this proj
 cargo build --release --bin generation-daemon --features cuda,audio-ogg
 ```
 
+A systemd user service unit is included in [`ace-step-gen.service`](ace-step-gen.service). Install with:
+
+```bash
+cp ace-step-gen.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now ace-step-gen
+```
+
 ## Features
 
 | Feature | Default | Description |

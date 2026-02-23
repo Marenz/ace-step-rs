@@ -1,0 +1,17 @@
+[Unit]
+Description=ACE-Step generation daemon (resident pipeline, Unix socket)
+After=local-fs.target
+
+[Service]
+Type=simple
+Environment=LIBRARY_PATH=/usr/lib64:/usr/lib
+Environment=PATH=/usr/local/cuda-12.4/bin:/usr/local/bin:/usr/bin:/bin
+Environment=CUDA_HOME=/usr/local/cuda-12.4
+Environment=RUST_LOG=info
+# Adjust the path to your built binary
+ExecStart=%h/Projects/ace-step-rs/target/release/generation-daemon --socket /tmp/ace-step-gen.sock
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
