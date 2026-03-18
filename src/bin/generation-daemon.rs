@@ -33,11 +33,21 @@
 //! {"ok": false, "error": "generation failed: ..."}
 //! ```
 //!
+//! **Commands** (one JSON line):
+//! ```json
+//! {"command": "unload"}
+//! ```
+//! Drops the pipeline to free VRAM. The next generation request will reload it
+//! automatically.
+//!
 //! # Example (shell)
 //!
 //! ```sh
 //! echo '{"caption":"ambient piano","duration_s":20,"output":"/tmp/piano.ogg"}' \
 //!   | socat - UNIX-CONNECT:/tmp/ace-step-gen.sock
+//!
+//! # Unload pipeline to free VRAM:
+//! echo '{"command":"unload"}' | socat - UNIX-CONNECT:/tmp/ace-step-gen.sock
 //! ```
 
 use std::path::PathBuf;
@@ -63,7 +73,7 @@ use tokio::{
 )]
 struct Args {
     /// Unix socket path to listen on.
-    #[arg(long, default_value = "/tmp/ace-step-gen.sock")]
+    #[arg(long, default_value = "/home/marenz/.spacebot/sockets/ace-step-gen.sock")]
     socket: PathBuf,
 
     /// CUDA device ordinal (0 = first GPU).
@@ -73,9 +83,17 @@ struct Args {
 
 // ── Wire types ───────────────────────────────────────────────────────────────
 
+/// A message received over the socket — either a command or a generation request.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum Message {
+    Command { command: String },
+    Generate(GenerateRequest),
+}
+
 /// A generation request received over the socket.
 #[derive(Debug, Deserialize)]
-struct Request {
+struct GenerateRequest {
     caption: String,
 
     #[serde(default)]
@@ -123,6 +141,10 @@ enum Response {
         sample_rate: u32,
         channels: u16,
     },
+    Simple {
+        ok: bool,
+        message: String,
+    },
     Err {
         ok: bool, // always false
         error: String,
@@ -137,6 +159,13 @@ impl Response {
             duration_s,
             sample_rate,
             channels,
+        }
+    }
+
+    fn ok_simple(msg: impl Into<String>) -> Self {
+        Self::Simple {
+            ok: true,
+            message: msg.into(),
         }
     }
 
@@ -215,12 +244,29 @@ async fn handle_connection(stream: UnixStream, manager: GenerationManager) -> an
 }
 
 async fn process_request(line: &str, manager: &GenerationManager) -> Response {
-    // Parse request.
-    let req: Request = match serde_json::from_str(line) {
-        Ok(r) => r,
-        Err(e) => return Response::err(format!("invalid JSON request: {e}")),
+    // Parse message.
+    let message: Message = match serde_json::from_str(line) {
+        Ok(m) => m,
+        Err(e) => return Response::err(format!("invalid JSON: {e}")),
     };
 
+    match message {
+        Message::Command { ref command } => process_command(command, manager).await,
+        Message::Generate(req) => process_generate(req, manager).await,
+    }
+}
+
+async fn process_command(command: &str, manager: &GenerationManager) -> Response {
+    match command {
+        "unload" => match manager.unload().await {
+            Ok(()) => Response::ok_simple("pipeline unloaded"),
+            Err(e) => Response::err(format!("unload failed: {e}")),
+        },
+        _ => Response::err(format!("unknown command: {command}")),
+    }
+}
+
+async fn process_generate(req: GenerateRequest, manager: &GenerationManager) -> Response {
     // Validate.
     if req.caption.trim().is_empty() {
         return Response::err("'caption' field is required and must not be empty");

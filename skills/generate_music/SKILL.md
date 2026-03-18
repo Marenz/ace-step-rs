@@ -5,19 +5,28 @@ description: Generate original music from a text description and optional lyrics
 
 # generate_music
 
+**DO THIS IMMEDIATELY — no exploration, no checking, no setup steps:**
+
+```sh
+ace-step-client \
+  --caption "YOUR STYLE HERE" \
+  --lyrics "YOUR LYRICS HERE" \
+  --duration 30 \
+  --output /path/to/workspace/music_output.mp3
+```
+
+The client auto-starts the daemon if it's not running (first invocation takes ~20s to load the model into VRAM, subsequent calls are fast). It prints the output path on success. Then use `send_file` to deliver the audio file to the user.
+
+**IMPORTANT:** The `--output` path MUST be inside your workspace directory so `send_file` can access it. Use your workspace path, not `/tmp/`.
+
+If the client exits non-zero, check stderr for the error message.
+
+---
+
 Generate original music locally using ACE-Step v1.5, a flow-matching diffusion model. Runs on the local RTX 3090 GPU. No API keys needed.
 
-**Daemon socket:** `/tmp/ace-step-gen.sock`
-
-The daemon keeps the model weights resident in VRAM across requests (no 2 GB reload per call). If the socket is not available, fall back to running the CLI binary directly (see Fallback section below).
-
-## Workflow
-
-1. Gather the required inputs from the user's request (see Parameters below).
-2. Choose an output path under `/tmp/` with a `.ogg` extension (smaller, good for Telegram/Discord).
-3. Send a JSON request to the daemon socket and read the response.
-4. Use `send_file` to deliver the audio file to the user.
-5. Report the generation time if available.
+**Client binary:** `ace-step-client` (on PATH via tools/bin)
+**Output format:** Use `.mp3` — the generator outputs MP3 directly, no post-conversion needed.
 
 ## Unicode / non-ASCII lyrics
 
@@ -27,71 +36,27 @@ The daemon keeps the model weights resident in VRAM across requests (no 2 GB rel
 - Write `Gemütlichkeit`, NOT `Gemuetlichkeit`
 - Write `Straße`, NOT `Strasse`
 
-The model was trained on real Unicode text and produces significantly better pronunciation when given proper characters. ASCII transliteration (ö→oe, ü→ue, ä→ae, ß→ss) will cause wrong pronunciation in the generated audio.
+The model was trained on real Unicode text and produces significantly better pronunciation when given proper characters.
 
-## Sending a request to the daemon
-
-The daemon speaks line-delimited JSON over a Unix socket. Send one JSON line, read one JSON response line.
-
-**Recommended method:** Write the JSON to a temp file first, then pipe it to socat. This avoids shell quoting issues with Unicode, newlines, and special characters in lyrics:
+## Client usage
 
 ```sh
-# 1. Write JSON request to a temp file using the file tool
-# 2. Then pipe it to the daemon:
-cat /tmp/music_request.json | socat -t 120 - UNIX-CONNECT:/tmp/ace-step-gen.sock
+ace-step-client [OPTIONS]
+
+Options:
+  --caption <TEXT>      Style description: genre, mood, tempo, instruments [required]
+  --output <PATH>       Output file (.mp3, .ogg, .wav) [default: auto]
+  --duration <SECS>     Duration in seconds [default: 30]
+  --lyrics <TEXT>       Lyrics with [verse]/[chorus]/[bridge] tags; omit for instrumental
+  --metas <TEXT>        Metadata e.g. "bpm: 120, key: C major"
+  --language <CODE>     Lyrics language code [default: en]
+  --shift <FLOAT>       ODE shift 1–3 [default: 3.0]
+  --seed <INT>          Fixed seed for reproducibility
+  --socket <PATH>       Socket path [default: ~/.spacebot/sockets/ace-step-gen.sock]
+  --timeout-secs <INT>  Wait timeout [default: 300]
+  --unload              Unload pipeline from VRAM instead of generating
+  --no-autostart        Don't try to auto-start the daemon
 ```
-
-### Alternative: inline shell command (short ASCII-only requests)
-
-For simple requests without lyrics or with ASCII-only text:
-
-```sh
-echo '{"caption":"upbeat jazz, 120 BPM","duration_s":30,"output":"/tmp/music_1234.ogg"}' \
-  | socat -t 120 - UNIX-CONNECT:/tmp/ace-step-gen.sock
-```
-
-**Do NOT use inline echo for requests with non-ASCII lyrics** — use the file-based method above instead.
-
-### Request JSON fields
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `caption` | string | **required** | Style description: genre, mood, tempo, instruments |
-| `output` | string | auto `/tmp/ace-step-<ms>.ogg` | Output file path (.wav or .ogg) |
-| `lyrics` | string | `""` | Lyrics with `[verse]`/`[chorus]`/`[bridge]` tags; `""` = instrumental |
-| `metas` | string | `""` | Metadata: `"bpm: 128, key: A minor, genre: electronic"` |
-| `language` | string | `"en"` | Lyrics language code (`"zh"` for Chinese) |
-| `duration_s` | float | LM suggestion or 30.0 | Duration in seconds (1–600). If omitted and LM is running, the LM may suggest a duration based on the caption. |
-| `shift` | float | `3.0` | ODE schedule shift (1–3); lower = more faithful, less variation |
-| `seed` | int\|null | `null` | Fixed seed for reproducibility; `null` = random |
-
-### Response JSON fields (success)
-
-```json
-{"ok": true, "path": "/tmp/music.ogg", "duration_s": 30.0, "sample_rate": 48000, "channels": 2}
-```
-
-### Response JSON fields (error)
-
-```json
-{"ok": false, "error": "generation failed: ..."}
-```
-
-## Commands
-
-The daemon also accepts command messages to manage the pipeline.
-
-### Unload (free VRAM)
-
-Drops the pipeline from VRAM. The next generation request will reload it automatically (~10–20s reload time).
-
-```sh
-echo '{"command":"unload"}' | socat - UNIX-CONNECT:/tmp/ace-step-gen.sock
-```
-
-Response: `{"ok":true,"message":"pipeline unloaded"}`
-
-Use this when VRAM is needed for other tasks (e.g. other GPU workloads). No need to restart the daemon — it stays running and reloads on demand.
 
 ## Caption writing guide
 
@@ -104,54 +69,32 @@ Be specific — genre, mood, tempo, instruments, vibe:
 
 ## Full example
 
-Step 1 — Use the **file tool** to write the JSON request:
-
-```json
-{
-  "caption": "indie pop with dreamy synths, gentle vocals, 100 BPM, wistful and nostalgic",
-  "lyrics": "[verse]\nNeon lights on rainy streets\nWhere the city never sleeps\n[chorus]\nWe were infinite, we were free\nJust the stars and you and me",
-  "metas": "bpm: 100, key: G major, genre: indie pop, instruments: synth, guitar, drums",
-  "duration_s": 45,
-  "output": "/tmp/music_indie.ogg"
-}
+```sh
+ace-step-client \
+  --caption "indie pop with dreamy synths, gentle vocals, 100 BPM, wistful and nostalgic" \
+  --lyrics "[verse]\nNeon lights on rainy streets\nWhere the city never sleeps\n[chorus]\nWe were infinite, we were free\nJust the stars and you and me" \
+  --metas "bpm: 100, key: G major" \
+  --duration 45 \
+  --output {workspace}/music_output.mp3
 ```
 
-Save this to `/tmp/music_request.json`.
+On success, prints the output path to stdout. Then:
 
-Step 2 — Use the **shell tool** to send it to the daemon:
+```
+send_file(file_path="{workspace}/music_output.mp3", caption="Here's your 45s indie pop track!")
+```
+
+## Free VRAM when not generating
 
 ```sh
-cat /tmp/music_request.json | socat -t 120 - UNIX-CONNECT:/tmp/ace-step-gen.sock
+ace-step-client --unload
 ```
 
-The response will be a JSON line like `{"ok":true,"path":"/tmp/music_indie.ogg",...}`.
-
-## After generation
-
-Always use `send_file` to deliver the audio to the user:
-
-```
-send_file(file_path="/tmp/music.ogg", caption="Here's your 30s cinematic trailer music!")
-```
-
-## Fallback: CLI binary (if daemon is not running)
-
-If `socat` returns an error connecting to the socket, the daemon is not running. Fall back to the CLI binary:
-
-**Binary:** `/home/marenz/Projects/ace-step-rs-no-cudnn/target/release/ace-step`
-
-```sh
-/home/marenz/Projects/ace-step-rs-no-cudnn/target/release/ace-step \
-  --caption "cinematic orchestral trailer music, epic brass, 140 BPM" \
-  --duration 30 \
-  --output /tmp/music.ogg
-```
-
-The binary reloads 2 GB of weights each run (~10–20s extra on first call after a cold start). Output format is the same JSON line to stdout on success.
+The next generation request will reload automatically.
 
 ## Troubleshooting
 
-- **Connection refused / no such file** — daemon not running. Use fallback CLI binary.
-- **`ok: false`** — check the `error` field. Common causes: invalid caption, CUDA OOM, bad output path.
-- **OGG not supported** — use `.wav` extension in the output path instead.
-- **Long generation time** — reduce `duration_s`. 30s ≈ 1–2s on RTX 3090.
+- **"auto-start unavailable"** — the daemon isn't running and the client can't start it from inside the sandbox. Report this to the user and suggest they run `systemctl --user start ace-step-gen.service` on the host. Do NOT try to install or download anything yourself.
+- **Timeout** — generation is taking too long. Use a shorter `--duration`.
+- **Non-zero exit** — check stderr for the error message.
+- **30s ≈ 1–2s on RTX 3090** — generation is fast, timeout errors are unlikely unless the daemon is overloaded.

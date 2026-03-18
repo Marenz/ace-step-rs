@@ -52,16 +52,21 @@ impl Default for ManagerConfig {
     }
 }
 
-/// A submitted generation request.
-struct PendingRequest {
-    params: GenerationParams,
-    reply: oneshot::Sender<Result<GeneratedAudio>>,
+/// Commands sent to the manager worker thread.
+enum ManagerCommand {
+    /// Generate audio from the given parameters.
+    Generate {
+        params: GenerationParams,
+        reply: oneshot::Sender<Result<GeneratedAudio>>,
+    },
+    /// Drop the pipeline to free VRAM. Next generate will reload automatically.
+    Unload { reply: oneshot::Sender<Result<()>> },
 }
 
 /// Handle for submitting generation requests to a running manager.
 #[derive(Clone)]
 pub struct GenerationManager {
-    tx: mpsc::Sender<PendingRequest>,
+    tx: mpsc::Sender<ManagerCommand>,
 }
 
 impl GenerationManager {
@@ -81,7 +86,7 @@ impl GenerationManager {
         .map_err(|join_error| Error::Manager(format!("pipeline load task panicked: {join_error}")))?
         .map_err(|e| Error::Manager(format!("pipeline load failed: {e}")))?;
 
-        let (tx, rx) = mpsc::channel::<PendingRequest>(64);
+        let (tx, rx) = mpsc::channel::<ManagerCommand>(64);
 
         tokio::task::spawn_blocking(move || run_manager(pipeline, config, rx));
 
@@ -92,10 +97,23 @@ impl GenerationManager {
     pub async fn generate(&self, params: GenerationParams) -> Result<GeneratedAudio> {
         let (reply_tx, reply_rx) = oneshot::channel::<Result<GeneratedAudio>>();
         self.tx
-            .send(PendingRequest {
+            .send(ManagerCommand::Generate {
                 params,
                 reply: reply_tx,
             })
+            .await
+            .map_err(|_| Error::Manager("manager has shut down".into()))?;
+
+        reply_rx
+            .await
+            .map_err(|_| Error::Manager("manager dropped reply channel".into()))?
+    }
+
+    /// Unload the pipeline to free VRAM. The next `generate` call will reload it.
+    pub async fn unload(&self) -> Result<()> {
+        let (reply_tx, reply_rx) = oneshot::channel::<Result<()>>();
+        self.tx
+            .send(ManagerCommand::Unload { reply: reply_tx })
             .await
             .map_err(|_| Error::Manager("manager has shut down".into()))?;
 
@@ -108,16 +126,47 @@ impl GenerationManager {
 /// The manager loop — runs in a dedicated blocking thread.
 ///
 /// Processes requests sequentially. On CUDA OOM, offloads to CPU and retries.
+/// When unloaded, the pipeline is dropped and lazily reloaded on next generate.
 fn run_manager(
-    mut pipeline: AceStepPipeline,
+    pipeline: AceStepPipeline,
     config: ManagerConfig,
-    mut rx: mpsc::Receiver<PendingRequest>,
+    mut rx: mpsc::Receiver<ManagerCommand>,
 ) {
-    while let Some(request) = rx.blocking_recv() {
-        let (result, new_pipeline) = generate_with_retry(pipeline, &config, request.params);
-        pipeline = new_pipeline;
-        // Ignore send errors — caller may have timed out.
-        let _ = request.reply.send(result);
+    let mut pipeline: Option<AceStepPipeline> = Some(pipeline);
+
+    while let Some(command) = rx.blocking_recv() {
+        match command {
+            ManagerCommand::Generate { params, reply } => {
+                // Reload if unloaded.
+                if pipeline.is_none() {
+                    tracing::info!("pipeline not loaded — reloading");
+                    let device = preferred_device(config.cuda_device);
+                    match AceStepPipeline::load(&device, config.dtype) {
+                        Ok(p) => pipeline = Some(p),
+                        Err(e) => {
+                            let _ = reply.send(Err(Error::Manager(format!(
+                                "failed to reload pipeline: {e}"
+                            ))));
+                            continue;
+                        }
+                    }
+                }
+
+                let p = pipeline.take().unwrap();
+                let (result, new_pipeline) = generate_with_retry(p, &config, params);
+                pipeline = Some(new_pipeline);
+                let _ = reply.send(result);
+            }
+            ManagerCommand::Unload { reply } => {
+                if pipeline.take().is_some() {
+                    tracing::info!("pipeline unloaded — VRAM freed");
+                    let _ = reply.send(Ok(()));
+                } else {
+                    tracing::info!("pipeline already unloaded");
+                    let _ = reply.send(Ok(()));
+                }
+            }
+        }
     }
     tracing::info!("generation manager shut down");
 }

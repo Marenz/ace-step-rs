@@ -22,7 +22,7 @@
 //! ace-step-client --unload
 //! ```
 
-use std::{path::PathBuf, time::Duration};
+use std::{path::PathBuf, process::Stdio, time::Duration};
 
 use anyhow::{Context, bail};
 use clap::Parser;
@@ -32,6 +32,9 @@ use tokio::{
     net::UnixStream,
     time::timeout,
 };
+
+const DEFAULT_SOCKET: &str = "/home/marenz/.spacebot/sockets/ace-step-gen.sock";
+const SYSTEMD_SERVICE: &str = "ace-step-gen.service";
 
 #[derive(Parser)]
 #[command(name = "ace-step-client", about = "Send a generation request to the ACE-Step daemon")]
@@ -68,9 +71,13 @@ struct Args {
     #[arg(long)]
     seed: Option<u64>,
 
-    /// Socket path (default: /tmp/ace-step-gen.sock)
-    #[arg(long, default_value = "/tmp/ace-step-gen.sock")]
+    /// Socket path
+    #[arg(long, default_value = DEFAULT_SOCKET)]
     socket: PathBuf,
+
+    /// Don't try to auto-start the daemon via systemd if the socket is missing
+    #[arg(long)]
+    no_autostart: bool,
 
     /// Timeout in seconds to wait for generation (default: 300)
     #[arg(long, default_value = "300")]
@@ -152,10 +159,7 @@ async fn main() -> anyhow::Result<()> {
 
     let request_line = serde_json::to_string(&request)? + "\n";
 
-    let stream = timeout(Duration::from_secs(10), UnixStream::connect(&args.socket))
-        .await
-        .context("timed out connecting to daemon socket")?
-        .with_context(|| format!("failed to connect to {}", args.socket.display()))?;
+    let stream = connect_or_start(&args.socket, args.no_autostart).await?;
 
     let (reader, mut writer) = stream.into_split();
 
@@ -203,4 +207,71 @@ async fn main() -> anyhow::Result<()> {
             bail!("generation failed: {}", r.error);
         }
     }
+}
+
+/// Try to connect to the daemon socket. If the socket doesn't exist and
+/// auto-start is allowed, start the systemd user service and poll until the
+/// socket appears (up to ~60s for pipeline loading).
+async fn connect_or_start(socket: &PathBuf, no_autostart: bool) -> anyhow::Result<UnixStream> {
+    // First attempt — fast path when daemon is already running.
+    match timeout(Duration::from_secs(5), UnixStream::connect(socket)).await {
+        Ok(Ok(stream)) => return Ok(stream),
+        Ok(Err(_)) | Err(_) => {}
+    }
+
+    if no_autostart {
+        bail!(
+            "daemon not reachable at {} (use --no-autostart=false or start it manually)",
+            socket.display()
+        );
+    }
+
+    // Auto-start requires XDG_RUNTIME_DIR to talk to the user's systemd.
+    // Inside a sandbox this is typically unset, so we skip autostart gracefully.
+    if std::env::var_os("XDG_RUNTIME_DIR").is_none() {
+        bail!(
+            "daemon not reachable at {} and auto-start unavailable \
+             (no XDG_RUNTIME_DIR — likely running inside sandbox). \
+             Start the daemon manually: systemctl --user start {SYSTEMD_SERVICE}",
+            socket.display()
+        );
+    }
+
+    eprintln!("daemon not running, starting {SYSTEMD_SERVICE}...");
+
+    let status = std::process::Command::new("systemctl")
+        .args(["--user", "start", SYSTEMD_SERVICE])
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit())
+        .status()
+        .context("failed to run systemctl")?;
+
+    if !status.success() {
+        bail!(
+            "systemctl --user start {SYSTEMD_SERVICE} failed (exit {})",
+            status.code().unwrap_or(-1)
+        );
+    }
+
+    // Poll for the socket to appear — the daemon needs time to load the
+    // pipeline into VRAM (~10-20s on RTX 3090).
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(60);
+    let mut interval = tokio::time::interval(Duration::from_secs(2));
+    interval.tick().await; // consume immediate first tick
+
+    while tokio::time::Instant::now() < deadline {
+        interval.tick().await;
+        match timeout(Duration::from_secs(5), UnixStream::connect(socket)).await {
+            Ok(Ok(stream)) => {
+                eprintln!("daemon ready");
+                return Ok(stream);
+            }
+            Ok(Err(_)) | Err(_) => continue,
+        }
+    }
+
+    bail!(
+        "daemon did not become reachable at {} within 60s after starting",
+        socket.display()
+    );
 }
