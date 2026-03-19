@@ -119,15 +119,30 @@ struct CommandRequest {
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum Response {
-    Success(SuccessResponse),
+    /// Generation success — audio data follows the JSON line.
+    GenerateOk(GenerateOkResponse),
+    /// Simple success (e.g. unload command).
+    SimpleOk(SimpleOkResponse),
+    /// Error.
     Error(ErrorResponse),
 }
 
 #[derive(Deserialize)]
-struct SuccessResponse {
+struct GenerateOkResponse {
     ok: bool,
-    path: Option<String>,
-    duration_s: Option<f64>,
+    duration_s: f64,
+    #[allow(dead_code)]
+    sample_rate: u32,
+    #[allow(dead_code)]
+    channels: u16,
+    format: String,
+    data_length: usize,
+}
+
+#[derive(Deserialize)]
+struct SimpleOkResponse {
+    ok: bool,
+    message: String,
 }
 
 #[derive(Deserialize)]
@@ -140,6 +155,8 @@ struct ErrorResponse {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
+
+    let output_path = args.output.clone();
 
     let request = if args.unload {
         Request::Command(CommandRequest { command: "unload".into() })
@@ -187,21 +204,50 @@ async fn main() -> anyhow::Result<()> {
         serde_json::from_str(response_line.trim()).context("failed to parse daemon response")?;
 
     match response {
-        Response::Success(r) if r.ok => {
-            if let Some(path) = r.path {
-                if let Some(duration) = r.duration_s {
-                    eprintln!("generated {:.1}s of audio → {path}", duration);
-                } else {
-                    eprintln!("done → {path}");
+        Response::GenerateOk(r) if r.ok => {
+            // Read the audio data that follows the JSON header.
+            let mut audio_data = vec![0u8; r.data_length];
+            timeout(
+                Duration::from_secs(30),
+                tokio::io::AsyncReadExt::read_exact(&mut reader, &mut audio_data),
+            )
+            .await
+            .context("timed out reading audio data")?
+            .context("failed to read audio data")?;
+
+            // Determine output path — use --output if given, else auto-generate.
+            let output_path = output_path.unwrap_or_else(|| {
+                let ts = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis())
+                    .unwrap_or(0);
+                std::path::PathBuf::from(format!("/tmp/ace-step-{ts}.{}", r.format))
+            });
+
+            // Ensure parent directory exists.
+            if let Some(parent) = output_path.parent() {
+                if !parent.as_os_str().is_empty() {
+                    std::fs::create_dir_all(parent)
+                        .with_context(|| format!("failed to create dir {}", parent.display()))?;
                 }
-                println!("{path}");
-            } else {
-                eprintln!("ok");
             }
+
+            std::fs::write(&output_path, &audio_data)
+                .with_context(|| format!("failed to write {}", output_path.display()))?;
+
+            eprintln!("generated {:.1}s of audio → {}", r.duration_s, output_path.display());
+            println!("{}", output_path.display());
             Ok(())
         }
-        Response::Success(r) => {
-            bail!("daemon returned ok=false without error field (raw: {:?})", r.path);
+        Response::GenerateOk(_) => {
+            bail!("daemon returned ok=false in generate response");
+        }
+        Response::SimpleOk(r) if r.ok => {
+            eprintln!("{}", r.message);
+            Ok(())
+        }
+        Response::SimpleOk(_) => {
+            bail!("daemon returned ok=false in simple response");
         }
         Response::Error(r) => {
             bail!("generation failed: {}", r.error);

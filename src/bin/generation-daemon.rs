@@ -53,7 +53,7 @@
 use std::path::PathBuf;
 
 use ace_step_rs::{
-    audio::write_audio,
+
     manager::{GenerationManager, ManagerConfig},
     pipeline::GenerationParams,
 };
@@ -131,15 +131,20 @@ fn default_shift() -> f64 {
 }
 
 /// Response sent back to the client.
+///
+/// For generation responses, `data_length` indicates how many raw audio bytes
+/// follow the JSON line. The client reads the JSON header, then reads exactly
+/// `data_length` bytes of encoded audio data.
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 enum Response {
     Ok {
         ok: bool, // always true
-        path: String,
         duration_s: f64,
         sample_rate: u32,
         channels: u16,
+        format: String,
+        data_length: usize,
     },
     Simple {
         ok: bool,
@@ -151,14 +156,27 @@ enum Response {
     },
 }
 
+/// The result of processing a request: a response header and optional audio data.
+struct ProcessResult {
+    response: Response,
+    audio_data: Option<Vec<u8>>,
+}
+
 impl Response {
-    fn ok(path: String, duration_s: f64, sample_rate: u32, channels: u16) -> Self {
+    fn ok_with_data(
+        duration_s: f64,
+        sample_rate: u32,
+        channels: u16,
+        format: String,
+        data_length: usize,
+    ) -> Self {
         Self::Ok {
             ok: true,
-            path,
             duration_s,
             sample_rate,
             channels,
+            format,
+            data_length,
         }
     }
 
@@ -233,21 +251,21 @@ async fn handle_connection(stream: UnixStream, manager: GenerationManager) -> an
     let line = match lines.next_line().await? {
         Some(l) if !l.trim().is_empty() => l,
         _ => {
-            send_response(&mut writer, Response::err("empty request")).await?;
+            send_response(&mut writer, Response::err("empty request"), None).await?;
             return Ok(());
         }
     };
 
-    let response = process_request(&line, &manager).await;
-    send_response(&mut writer, response).await?;
+    let result = process_request(&line, &manager).await;
+    send_response(&mut writer, result.response, result.audio_data.as_deref()).await?;
     Ok(())
 }
 
-async fn process_request(line: &str, manager: &GenerationManager) -> Response {
+async fn process_request(line: &str, manager: &GenerationManager) -> ProcessResult {
     // Parse message.
     let message: Message = match serde_json::from_str(line) {
         Ok(m) => m,
-        Err(e) => return Response::err(format!("invalid JSON: {e}")),
+        Err(e) => return ProcessResult { response: Response::err(format!("invalid JSON: {e}")), audio_data: None },
     };
 
     match message {
@@ -256,67 +274,36 @@ async fn process_request(line: &str, manager: &GenerationManager) -> Response {
     }
 }
 
-async fn process_command(command: &str, manager: &GenerationManager) -> Response {
-    match command {
+async fn process_command(command: &str, manager: &GenerationManager) -> ProcessResult {
+    let response = match command {
         "unload" => match manager.unload().await {
             Ok(()) => Response::ok_simple("pipeline unloaded"),
             Err(e) => Response::err(format!("unload failed: {e}")),
         },
         _ => Response::err(format!("unknown command: {command}")),
-    }
+    };
+    ProcessResult { response, audio_data: None }
 }
 
-async fn process_generate(req: GenerateRequest, manager: &GenerationManager) -> Response {
+async fn process_generate(req: GenerateRequest, manager: &GenerationManager) -> ProcessResult {
+    use ace_step_rs::audio::{AudioFormat, encode_audio};
+
+    let err = |msg: String| ProcessResult { response: Response::err(msg), audio_data: None };
+
     // Validate.
     if req.caption.trim().is_empty() {
-        return Response::err("'caption' field is required and must not be empty");
+        return err("'caption' field is required and must not be empty".into());
     }
     if req.duration_s < 1.0 || req.duration_s > 600.0 {
-        return Response::err(format!(
-            "duration_s must be between 1 and 600, got {}",
-            req.duration_s
-        ));
+        return err(format!("duration_s must be between 1 and 600, got {}", req.duration_s));
     }
 
-    // Resolve output path.
-    let output_path = req.output.unwrap_or_else(|| {
-        let ts = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0);
-        let spool = dirs::data_local_dir()
-            .unwrap_or_else(|| std::path::PathBuf::from("/tmp"))
-            .join("ace-step/spool");
-        // Ensure spool dir exists; fall back to /tmp on error.
-        if std::fs::create_dir_all(&spool).is_ok() {
-            spool
-                .join(format!("{ts}.ogg"))
-                .to_string_lossy()
-                .into_owned()
-        } else {
-            format!("/tmp/ace-step-{ts}.ogg")
-        }
-    });
-
-    // Validate extension.
-    let ext = std::path::Path::new(&output_path)
-        .extension()
+    // Determine output format from the output path extension, default to mp3.
+    let format = req.output.as_ref()
+        .and_then(|p| std::path::Path::new(p).extension())
         .and_then(|e| e.to_str())
-        .unwrap_or("wav");
-    if ace_step_rs::audio::AudioFormat::parse(ext).is_none() {
-        return Response::err(format!(
-            "unsupported output format '{ext}'. Use .wav or .ogg"
-        ));
-    }
-
-    // Ensure output directory exists.
-    if let Some(parent) = std::path::Path::new(&output_path).parent() {
-        if !parent.as_os_str().is_empty() {
-            if let Err(e) = std::fs::create_dir_all(parent) {
-                return Response::err(format!("could not create output directory: {e}"));
-            }
-        }
-    }
+        .and_then(AudioFormat::parse)
+        .unwrap_or(AudioFormat::Mp3);
 
     let params = GenerationParams {
         caption: req.caption,
@@ -335,46 +322,56 @@ async fn process_generate(req: GenerateRequest, manager: &GenerationManager) -> 
     tracing::info!(
         caption = %params.caption,
         duration_s = params.duration_s,
-        output = %output_path,
+        format = %format,
         "generating"
     );
 
     let audio = match manager.generate(params).await {
         Ok(a) => a,
         Err(ref e) if e.to_string().contains("manager has shut down") => {
-            // The manager background thread has died (e.g. double OOM failure).
-            // Exit so systemd can restart the process and reload the pipeline.
             tracing::error!("generation manager has shut down — exiting for restart");
             std::process::exit(1);
         }
-        Err(e) => return Response::err(format!("generation failed: {e}")),
+        Err(e) => return err(format!("generation failed: {e}")),
     };
 
-    if let Err(e) = write_audio(
-        &output_path,
-        &audio.samples,
-        audio.sample_rate,
-        audio.channels,
-    ) {
-        return Response::err(format!("failed to write audio file: {e}"));
+    let encoded = match encode_audio(format, &audio.samples, audio.sample_rate, audio.channels) {
+        Ok(data) => data,
+        Err(e) => return err(format!("failed to encode audio: {e}")),
+    };
+
+    tracing::info!(
+        format = %format,
+        bytes = encoded.len(),
+        "done"
+    );
+
+    let data_length = encoded.len();
+    ProcessResult {
+        response: Response::ok_with_data(
+            req.duration_s,
+            audio.sample_rate,
+            audio.channels,
+            format.extension().to_string(),
+            data_length,
+        ),
+        audio_data: Some(encoded),
     }
-
-    tracing::info!(output = %output_path, "done");
-
-    Response::ok(
-        output_path,
-        req.duration_s,
-        audio.sample_rate,
-        audio.channels,
-    )
 }
 
 async fn send_response(
     writer: &mut tokio::net::unix::OwnedWriteHalf,
     response: Response,
+    audio_data: Option<&[u8]>,
 ) -> anyhow::Result<()> {
     let mut json = serde_json::to_string(&response)?;
     json.push('\n');
     writer.write_all(json.as_bytes()).await?;
+
+    // Send raw audio bytes after the JSON header.
+    if let Some(data) = audio_data {
+        writer.write_all(data).await?;
+    }
+
     Ok(())
 }

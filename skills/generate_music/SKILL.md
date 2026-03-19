@@ -15,9 +15,11 @@ ace-step-client \
   --output /path/to/workspace/music_output.mp3
 ```
 
-The client auto-starts the daemon if it's not running (first invocation takes ~20s to load the model into VRAM, subsequent calls are fast). It prints the output path on success. Then use `send_file` to deliver the audio file to the user.
+The client auto-starts the daemon if it's not running (first invocation takes ~20s to load the model into VRAM, subsequent calls are fast). Audio data is streamed back over the socket and written locally by the client, so the output file is always accessible regardless of sandbox. It prints the output path on success. Then use `send_file` to deliver the audio file to the user.
 
 **IMPORTANT:** The `--output` path MUST be inside your workspace directory so `send_file` can access it. Use your workspace path, not `/tmp/`.
+
+**IMPORTANT:** Generation can take 30-180 seconds depending on duration and GPU load. Set `timeout_seconds` to at least 300 when calling the shell tool.
 
 If the client exits non-zero, check stderr for the error message.
 

@@ -58,6 +58,52 @@ pub fn write_ogg_to<W: std::io::Write>(
     ogg::write_ogg_to(writer, samples, sample_rate, num_channels)
 }
 
+/// Encode interleaved f32 samples to the specified format, returning the bytes.
+pub fn encode_audio(
+    format: AudioFormat,
+    samples: &[f32],
+    sample_rate: u32,
+    num_channels: u16,
+) -> crate::Result<Vec<u8>> {
+    match format {
+        AudioFormat::Wav => {
+            let mut cursor = std::io::Cursor::new(Vec::new());
+            let spec = hound::WavSpec {
+                channels: num_channels,
+                sample_rate,
+                bits_per_sample: 32,
+                sample_format: hound::SampleFormat::Float,
+            };
+            let mut writer = hound::WavWriter::new(&mut cursor, spec)?;
+            for &s in samples {
+                writer.write_sample(s)?;
+            }
+            writer.finalize()?;
+            Ok(cursor.into_inner())
+        }
+        #[cfg(feature = "audio-ogg")]
+        AudioFormat::Ogg => {
+            let mut buf = Vec::new();
+            ogg::write_ogg_to(&mut buf, samples, sample_rate, num_channels)?;
+            Ok(buf)
+        }
+        #[cfg(not(feature = "audio-ogg"))]
+        AudioFormat::Ogg => Err(crate::Error::Audio(
+            "OGG not enabled. Build with --features audio-ogg".to_string(),
+        )),
+        #[cfg(feature = "audio-mp3")]
+        AudioFormat::Mp3 => {
+            let mut buf = Vec::new();
+            mp3::write_mp3_to(&mut buf, samples, sample_rate, num_channels)?;
+            Ok(buf)
+        }
+        #[cfg(not(feature = "audio-mp3"))]
+        AudioFormat::Mp3 => Err(crate::Error::Audio(
+            "MP3 not enabled. Build with --features audio-mp3".to_string(),
+        )),
+    }
+}
+
 /// Write interleaved f32 samples to the specified format.
 pub fn write_audio(
     path: impl AsRef<std::path::Path>,
