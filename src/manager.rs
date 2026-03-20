@@ -17,6 +17,8 @@
 //! }
 //! ```
 
+use std::time::{Duration, Instant};
+
 use candle_core::{DType, Device};
 use tokio::sync::{mpsc, oneshot};
 
@@ -40,6 +42,14 @@ pub struct ManagerConfig {
     ///
     /// Default: 2 GiB.
     pub min_free_vram_bytes: u64,
+
+    /// Automatically unload the pipeline from VRAM after this duration of
+    /// inactivity. The next generation request will reload it automatically.
+    ///
+    /// `None` disables auto-unload.
+    ///
+    /// Default: `None`.
+    pub idle_unload_after: Option<Duration>,
 }
 
 impl Default for ManagerConfig {
@@ -48,6 +58,7 @@ impl Default for ManagerConfig {
             cuda_device: 0,
             dtype: DType::F32,
             min_free_vram_bytes: 2 * 1024 * 1024 * 1024, // 2 GiB
+            idle_unload_after: None,
         }
     }
 }
@@ -127,14 +138,47 @@ impl GenerationManager {
 ///
 /// Processes requests sequentially. On CUDA OOM, offloads to CPU and retries.
 /// When unloaded, the pipeline is dropped and lazily reloaded on next generate.
+///
+/// When `idle_unload_after` is configured, the loop uses a timeout on the
+/// receive so it can auto-unload the pipeline after a period of inactivity.
 fn run_manager(
     pipeline: AceStepPipeline,
     config: ManagerConfig,
     mut rx: mpsc::Receiver<ManagerCommand>,
 ) {
     let mut pipeline: Option<AceStepPipeline> = Some(pipeline);
+    let mut last_activity = Instant::now();
 
-    while let Some(command) = rx.blocking_recv() {
+    loop {
+        let command = match config.idle_unload_after {
+            Some(idle_timeout) if pipeline.is_some() => {
+                // Calculate remaining time until idle unload fires.
+                let elapsed = last_activity.elapsed();
+                if elapsed >= idle_timeout {
+                    // Already past the deadline — unload now.
+                    pipeline.take();
+                    tracing::info!(
+                        idle_secs = idle_timeout.as_secs(),
+                        "idle timeout reached — pipeline unloaded to free VRAM"
+                    );
+                    // Fall through to blocking recv (no timeout needed while unloaded).
+                    rx.blocking_recv()
+                } else {
+                    let remaining = idle_timeout - elapsed;
+                    // Use a short poll loop since tokio mpsc doesn't have blocking_recv_timeout.
+                    recv_with_timeout(&mut rx, remaining)
+                }
+            }
+            _ => {
+                // No idle timeout or pipeline already unloaded — block indefinitely.
+                rx.blocking_recv()
+            }
+        };
+
+        let Some(command) = command else {
+            break; // Channel closed, shut down.
+        };
+
         match command {
             ManagerCommand::Generate { params, reply } => {
                 // Reload if unloaded.
@@ -155,6 +199,7 @@ fn run_manager(
                 let p = pipeline.take().unwrap();
                 let (result, new_pipeline) = generate_with_retry(p, &config, params);
                 pipeline = Some(new_pipeline);
+                last_activity = Instant::now();
                 let _ = reply.send(result);
             }
             ManagerCommand::Unload { reply } => {
@@ -169,6 +214,33 @@ fn run_manager(
         }
     }
     tracing::info!("generation manager shut down");
+}
+
+/// Blocking receive with a timeout. Polls with exponential backoff to avoid
+/// busy-waiting while still responding promptly to new messages.
+fn recv_with_timeout(
+    rx: &mut mpsc::Receiver<ManagerCommand>,
+    timeout: Duration,
+) -> Option<ManagerCommand> {
+    let deadline = Instant::now() + timeout;
+    let mut sleep_ms = 10u64;
+    let max_sleep_ms = 500u64;
+
+    loop {
+        match rx.try_recv() {
+            Ok(command) => return Some(command),
+            Err(mpsc::error::TryRecvError::Empty) => {
+                if Instant::now() >= deadline {
+                    return None; // Timed out — signal idle unload.
+                }
+                let remaining = deadline.duration_since(Instant::now());
+                let sleep = Duration::from_millis(sleep_ms).min(remaining);
+                std::thread::sleep(sleep);
+                sleep_ms = (sleep_ms * 2).min(max_sleep_ms);
+            }
+            Err(mpsc::error::TryRecvError::Disconnected) => return None,
+        }
+    }
 }
 
 /// Try to generate. On CUDA OOM, offload to CPU and retry once.
@@ -328,5 +400,25 @@ mod tests {
         assert_eq!(config.cuda_device, 0);
         assert_eq!(config.dtype, DType::F32);
         assert_eq!(config.min_free_vram_bytes, 2 * 1024 * 1024 * 1024);
+        assert!(config.idle_unload_after.is_none());
+    }
+
+    #[test]
+    fn test_recv_with_timeout_returns_none_on_empty_channel() {
+        let (_tx, mut rx) = mpsc::channel::<ManagerCommand>(1);
+        let start = Instant::now();
+        let result = recv_with_timeout(&mut rx, Duration::from_millis(50));
+        assert!(result.is_none());
+        assert!(start.elapsed() >= Duration::from_millis(50));
+    }
+
+    #[test]
+    fn test_recv_with_timeout_returns_command_before_deadline() {
+        let (tx, mut rx) = mpsc::channel::<ManagerCommand>(1);
+        let (reply_tx, _reply_rx) = oneshot::channel();
+        tx.blocking_send(ManagerCommand::Unload { reply: reply_tx }).unwrap();
+        let result = recv_with_timeout(&mut rx, Duration::from_secs(5));
+        assert!(result.is_some());
+        assert!(matches!(result.unwrap(), ManagerCommand::Unload { .. }));
     }
 }

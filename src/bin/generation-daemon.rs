@@ -79,6 +79,12 @@ struct Args {
     /// CUDA device ordinal (0 = first GPU).
     #[arg(long, default_value_t = 0)]
     device: usize,
+
+    /// Automatically unload the pipeline from VRAM after this many seconds of
+    /// inactivity. The next request will reload it automatically (~10-20s).
+    /// Set to 0 to disable.
+    #[arg(long, default_value_t = 0)]
+    idle_unload_secs: u64,
 }
 
 // ── Wire types ───────────────────────────────────────────────────────────────
@@ -214,9 +220,17 @@ async fn main() -> anyhow::Result<()> {
         std::fs::remove_file(&args.socket)?;
     }
 
+    let idle_unload_after = if args.idle_unload_secs > 0 {
+        tracing::info!(secs = args.idle_unload_secs, "idle auto-unload enabled");
+        Some(std::time::Duration::from_secs(args.idle_unload_secs))
+    } else {
+        None
+    };
+
     tracing::info!("Loading ACE-Step pipeline (this may take a minute on first run)...");
     let config = ManagerConfig {
         cuda_device: args.device,
+        idle_unload_after,
         ..ManagerConfig::default()
     };
     let manager = GenerationManager::start(config).await?;
