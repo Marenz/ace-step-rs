@@ -276,12 +276,11 @@ impl AceStepPipeline {
         };
         let generation_model = AceStepConditionGenerationModel::new(&cfg, dtype, device, dit_vb)?;
 
-        // Load VAE decoder
-        let vae_device = if cpu_offload { &Device::Cpu } else { device };
-        tracing::info!("Loading VAE decoder on {:?}...", vae_device);
+        // Load VAE decoder — always on GPU (only 322MB, decode is compute-heavy)
+        tracing::info!("Loading VAE decoder on {:?}...", device);
         let vae_cfg = VaeConfig::default();
         let vae_vb = unsafe {
-            VarBuilder::from_mmaped_safetensors(&[&paths.vae_safetensors], dtype, vae_device)?
+            VarBuilder::from_mmaped_safetensors(&[&paths.vae_safetensors], dtype, device)?
         };
         let vae = OobleckDecoder::new(&vae_cfg, vae_vb.pp("decoder"))?;
 
@@ -301,7 +300,7 @@ impl AceStepPipeline {
             device: device.clone(),
             dtype,
             paths,
-            cpu_offload: false,
+            cpu_offload,
         })
     }
 
@@ -479,6 +478,10 @@ impl AceStepPipeline {
         // 2. Encode caption through Qwen3 (clear KV cache from any prior call)
         let t1 = Instant::now();
         self.text_encoder.clear_kv_cache();
+        tracing::debug!(
+            "caption_tensor device={:?}, text_encoder device check starting...",
+            caption_tensor.device()
+        );
         let text_hidden = self.text_encoder.encode_text(&caption_tensor)?;
         // Move to GPU if text encoder is on CPU (offload mode)
         let text_hidden = if self.cpu_offload {
@@ -514,6 +517,14 @@ impl AceStepPipeline {
         } else {
             lyric_hidden
         };
+
+        tracing::debug!(
+            "Device check: text_hidden={:?} lyric_hidden={:?} caption_mask={:?} lyric_mask={:?}",
+            text_hidden.device(),
+            lyric_hidden.device(),
+            caption_mask_tensor.device(),
+            lyric_mask_tensor.device()
+        );
 
         // 5. Compute sequence length from duration, or infer from custom src_latents.
         let acoustic_dim = self.cfg.audio_acoustic_hidden_dim;
@@ -574,15 +585,10 @@ impl AceStepPipeline {
         // 9. Decode latents to waveform via VAE
         // Latents: [B, T, 64] → transpose to [B, 64, T] for VAE
         // Uses chunked/tiled decode for long sequences to avoid VRAM OOM.
+        // VAE always runs on GPU (only 322MB, decode is compute-heavy).
         let t3 = Instant::now();
         let latents = output.target_latents.transpose(1, 2)?.contiguous()?;
-        let waveform = if self.cpu_offload {
-            // Move latents to CPU for VAE decode
-            let latents_cpu = latents.to_device(&Device::Cpu)?;
-            self.vae.tiled_decode(&latents_cpu, 256, 16)?
-        } else {
-            self.vae.tiled_decode(&latents, 256, 16)?
-        };
+        let waveform = self.vae.tiled_decode(&latents, 256, 16)?;
         tracing::info!("VAE decode: {:.2}s", t3.elapsed().as_secs_f64());
 
         // 10. Peak normalization (matches Python: pred_wavs / peak.clamp(min=1.0))
