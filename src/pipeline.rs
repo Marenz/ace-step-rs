@@ -189,13 +189,22 @@ pub struct AceStepPipeline {
     dtype: DType,
     /// Cached paths for reloading on a different device (e.g. CPU fallback).
     paths: ModelPaths,
+    /// When true, only keep the active model component on GPU.
+    /// Text encoder and VAE are moved to CPU when not in use.
+    cpu_offload: bool,
 }
 
 impl AceStepPipeline {
     /// Load the pipeline, downloading model weights from HuggingFace if needed.
     pub fn load(device: &Device, dtype: DType) -> Result<Self> {
         let paths = download_models()?;
-        Self::load_from_paths(paths, device, dtype)
+        Self::load_from_paths(paths, device, dtype, false)
+    }
+
+    /// Load the pipeline with CPU offload — text encoder and VAE on CPU, DiT on GPU.
+    pub fn load_with_cpu_offload(device: &Device, dtype: DType) -> Result<Self> {
+        let paths = download_models()?;
+        Self::load_from_paths(paths, device, dtype, true)
     }
 
     /// Reload the pipeline on a different device.
@@ -215,17 +224,22 @@ impl AceStepPipeline {
             silence_latent: _,
             cfg: _,
             device: _,
+            cpu_offload: _,
         } = self;
-        Self::load_from_paths(paths, device, dtype)
+        Self::load_from_paths(paths, device, dtype, false)
     }
-
     /// The device this pipeline is currently loaded on.
     pub fn device(&self) -> &Device {
         &self.device
     }
 
     /// Load from pre-downloaded model files (takes ownership to store for later reload).
-    fn load_from_paths(paths: ModelPaths, device: &Device, dtype: DType) -> Result<Self> {
+    fn load_from_paths(
+        paths: ModelPaths,
+        device: &Device,
+        dtype: DType,
+        cpu_offload: bool,
+    ) -> Result<Self> {
         // Enable TF32 tensor-core math for F32 matmuls on Ampere+ GPUs.
         // Same tradeoff PyTorch makes by default (10-bit mantissa vs 23-bit).
         #[cfg(feature = "cuda")]
@@ -238,10 +252,15 @@ impl AceStepPipeline {
         let tokenizer = Tokenizer::from_file(&paths.tokenizer_json)?;
 
         // Load text encoder (Qwen3-Embedding-0.6B)
-        tracing::info!("Loading Qwen3 text encoder...");
+        let text_device = if cpu_offload { &Device::Cpu } else { device };
+        tracing::info!("Loading Qwen3 text encoder on {:?}...", text_device);
         let qwen3_cfg = text::default_qwen3_config();
         let text_vb = unsafe {
-            VarBuilder::from_mmaped_safetensors(&[&paths.text_encoder_safetensors], dtype, device)?
+            VarBuilder::from_mmaped_safetensors(
+                &[&paths.text_encoder_safetensors],
+                dtype,
+                text_device,
+            )?
         };
         // Candle's Qwen3 model requests keys with "model." prefix (e.g. "model.embed_tokens.weight")
         // but the Qwen3-Embedding-0.6B safetensors stores keys without it (e.g. "embed_tokens.weight").
@@ -258,10 +277,11 @@ impl AceStepPipeline {
         let generation_model = AceStepConditionGenerationModel::new(&cfg, dtype, device, dit_vb)?;
 
         // Load VAE decoder
-        tracing::info!("Loading VAE decoder...");
+        let vae_device = if cpu_offload { &Device::Cpu } else { device };
+        tracing::info!("Loading VAE decoder on {:?}...", vae_device);
         let vae_cfg = VaeConfig::default();
         let vae_vb = unsafe {
-            VarBuilder::from_mmaped_safetensors(&[&paths.vae_safetensors], dtype, device)?
+            VarBuilder::from_mmaped_safetensors(&[&paths.vae_safetensors], dtype, vae_device)?
         };
         let vae = OobleckDecoder::new(&vae_cfg, vae_vb.pp("decoder"))?;
 
@@ -281,7 +301,27 @@ impl AceStepPipeline {
             device: device.clone(),
             dtype,
             paths,
+            cpu_offload: false,
         })
+    }
+
+    /// Enable CPU offload mode — text encoder and VAE run on CPU, only DiT uses GPU.
+    /// Reduces peak VRAM from ~13GB to ~10GB (DiT + working memory).
+    /// Must be called right after `load()` — it reloads text_encoder and VAE onto CPU.
+    pub fn with_cpu_offload(self) -> Result<Self> {
+        let Self {
+            tokenizer: _,
+            text_encoder: _,
+            generation_model: _,
+            vae: _,
+            silence_latent: _,
+            cfg: _,
+            cpu_offload: _,
+            dtype,
+            paths,
+            device,
+        } = self;
+        Self::load_from_paths(paths, &device, dtype, true)
     }
 
     // --- Accessor methods ---
@@ -426,13 +466,26 @@ impl AceStepPipeline {
             .map(|&m| m as f32)
             .collect();
 
-        let caption_tensor = Tensor::new(&caption_ids[..], &self.device)?.unsqueeze(0)?;
-        let caption_mask_tensor = Tensor::new(&caption_mask[..], &self.device)?.unsqueeze(0)?;
+        // Device for text encoder (CPU if offload, GPU otherwise)
+        let text_device = if self.cpu_offload {
+            &Device::Cpu
+        } else {
+            &self.device
+        };
+
+        let caption_tensor = Tensor::new(&caption_ids[..], text_device)?.unsqueeze(0)?;
+        let caption_mask_tensor = Tensor::new(&caption_mask[..], text_device)?.unsqueeze(0)?;
 
         // 2. Encode caption through Qwen3 (clear KV cache from any prior call)
         let t1 = Instant::now();
         self.text_encoder.clear_kv_cache();
         let text_hidden = self.text_encoder.encode_text(&caption_tensor)?;
+        // Move to GPU if text encoder is on CPU (offload mode)
+        let text_hidden = if self.cpu_offload {
+            text_hidden.to_device(&self.device)?
+        } else {
+            text_hidden
+        };
         tracing::info!("Text encoding: {:.2}s", t1.elapsed().as_secs_f64());
 
         // 3. Format and tokenize lyrics
@@ -448,11 +501,19 @@ impl AceStepPipeline {
             .map(|&m| m as f32)
             .collect();
 
-        let lyric_tensor = Tensor::new(&lyric_ids[..], &self.device)?.unsqueeze(0)?;
-        let lyric_mask_tensor = Tensor::new(&lyric_mask[..], &self.device)?.unsqueeze(0)?;
+        let lyric_tensor = Tensor::new(&lyric_ids[..], text_device)?.unsqueeze(0)?;
+        let lyric_mask_tensor = Tensor::new(&lyric_mask[..], text_device)?
+            .unsqueeze(0)?
+            .to_dtype(self.dtype)?;
 
         // 4. Get lyric embeddings (raw token embeddings, NOT full encoder)
         let lyric_hidden = self.text_encoder.embed_lyrics(&lyric_tensor)?;
+        // Move to GPU if text encoder is on CPU (offload mode)
+        let lyric_hidden = if self.cpu_offload {
+            lyric_hidden.to_device(&self.device)?
+        } else {
+            lyric_hidden
+        };
 
         // 5. Compute sequence length from duration, or infer from custom src_latents.
         let acoustic_dim = self.cfg.audio_acoustic_hidden_dim;
@@ -491,9 +552,13 @@ impl AceStepPipeline {
         );
         let output = self.generation_model.generate_audio(
             &text_hidden,
-            &caption_mask_tensor.to_dtype(self.dtype)?,
+            &caption_mask_tensor
+                .to_device(&self.device)?
+                .to_dtype(self.dtype)?,
             &lyric_hidden,
-            &lyric_mask_tensor.to_dtype(self.dtype)?,
+            &lyric_mask_tensor
+                .to_device(&self.device)?
+                .to_dtype(self.dtype)?,
             &refer_audio,
             &refer_order,
             &src_latents,
@@ -511,7 +576,13 @@ impl AceStepPipeline {
         // Uses chunked/tiled decode for long sequences to avoid VRAM OOM.
         let t3 = Instant::now();
         let latents = output.target_latents.transpose(1, 2)?.contiguous()?;
-        let waveform = self.vae.tiled_decode(&latents, 256, 16)?;
+        let waveform = if self.cpu_offload {
+            // Move latents to CPU for VAE decode
+            let latents_cpu = latents.to_device(&Device::Cpu)?;
+            self.vae.tiled_decode(&latents_cpu, 256, 16)?
+        } else {
+            self.vae.tiled_decode(&latents, 256, 16)?
+        };
         tracing::info!("VAE decode: {:.2}s", t3.elapsed().as_secs_f64());
 
         // 10. Peak normalization (matches Python: pred_wavs / peak.clamp(min=1.0))

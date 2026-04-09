@@ -1,0 +1,563 @@
+2026-02-22T21:11:00.119211Z  INFO Listening on /tmp/ace-radio.sock
+2026-02-22T21:11:00.307193Z  INFO loading ACE-Step pipeline device=Cuda(CudaDevice(DeviceId(1)))
+2026-02-22T21:11:00.312066Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T21:11:00.312150Z  INFO All models downloaded successfully
+2026-02-22T21:11:00.312447Z  INFO Loading tokenizer...
+2026-02-22T21:11:00.677139Z  INFO Loading Qwen3 text encoder...
+2026-02-22T21:11:01.085726Z  INFO Loading DiT generation model...
+2026-02-22T21:11:02.280009Z  INFO Loading VAE decoder...
+2026-02-22T21:11:02.331884Z  INFO Loading silence latent...
+2026-02-22T21:11:02.341865Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T21:11:02.341980Z  INFO Pipeline loaded successfully
+2026-02-22T21:11:02.351139Z  INFO Pipeline ready
+2026-02-22T21:11:02.365136Z  INFO Queue empty, using fallback: "aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:11:02.365312Z  INFO event:generating song=0 duration=180s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:11:02.392045Z  INFO Text encoding: 0.02s
+2026-02-22T21:11:02.392232Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:11:07.147153Z  INFO Diffusion (8 ODE steps): 4.75s
+2026-02-22T21:11:11.099128Z  INFO VAE decode: 3.95s
+2026-02-22T21:11:11.441922Z  INFO Total generate: 9.07s
+2026-02-22T21:11:11.446784Z  INFO event:song_ready song=0 seed=1771794662365179387 duration=180s gen=9.1s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:11:11.480882Z  INFO Loaded song #0 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:11:11.480961Z  INFO event:playing song=0 duration=180s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:11:11.646817Z  INFO Queue empty, using fallback: "indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:11:11.646882Z  INFO event:generating song=1 duration=180s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:11:11.656163Z  INFO Text encoding: 0.01s
+2026-02-22T21:11:11.656310Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:11:11.834714Z  INFO socket cmd: "request {\"caption\":\"late 90s pop punk comedy rock, obnoxious humor, funky bass riff, talk-rap verses, big dumb singalong chorus, Bloodhound Gang style\",\"lyrics\":\"I woke up this morning with a plan\\nTo become the world's least useful man\\nI got a degree in standing still\\nAnd a PhD in eating cereal for every meal\\n\\nMy neighbor says I lack ambition\\nI said thanks that's my favorite condition\\nI'm not lazy I'm energy efficient\\nLike a sloth but way less proficient\\n\\nDo the nothing, do the nothing\\nStand around and do the nothing\\nIt's an art form, it's a craft\\nDo the nothing, sit and laugh\\n\\nI applied for a job as a professional chair\\nThey said we need someone who's actually there\\nI said I'm there in spirit does that count\\nThey said no sir please leave the building now\\n\\nMy therapist says I need a goal\\nI said my goal is to not have a goal\\nShe wrote something down and shook her head\\nI took that as a win and went back to bed\\n\\nDo the nothing, do the nothing\\nStand around and do the nothing\\nIt's an art form, it's a craft\\nDo the nothing, sit and laugh\\n\\nThey say the early bird gets the worm\\nBut I say the late bird gets more sleep\\nAnd honestly between the two\\nI'd rather count the sheep\",\"bpm\":136,\"key_scale\":\"A major\",\"duration_s\":210}"
+2026-02-22T21:11:16.358295Z  INFO Diffusion (8 ODE steps): 4.70s
+2026-02-22T21:11:20.356434Z  INFO VAE decode: 4.00s
+2026-02-22T21:11:20.703339Z  INFO Total generate: 9.06s
+2026-02-22T21:11:20.708077Z  INFO event:song_ready song=1 seed=1771794671646856325 duration=180s gen=9.1s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:11:20.708110Z  INFO event:generating song=2 duration=210s caption="late 90s pop punk comedy rock, obnoxious humor, funky bass r"
+2026-02-22T21:11:20.719954Z  INFO Text encoding: 0.01s
+2026-02-22T21:11:20.720936Z  INFO Generating 210.0s of audio (5250 frames)...
+2026-02-22T21:11:20.752528Z  INFO Loaded song #1 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:11:20.752560Z  INFO Waiting for front buffer to drain: 16389120 samples remaining (170.7s)
+2026-02-22T21:11:26.967121Z  INFO Diffusion (8 ODE steps): 6.25s
+2026-02-22T21:11:31.618509Z  INFO VAE decode: 4.65s
+2026-02-22T21:11:32.058318Z  INFO Total generate: 11.35s
+2026-02-22T21:11:32.064066Z  INFO Queue empty, using fallback: "punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T21:11:32.064083Z  INFO event:song_ready song=2 seed=1771794680708061536 duration=210s gen=11.4s caption="late 90s pop punk comedy rock, obnoxious humor, funky bass r"
+2026-02-22T21:11:32.064102Z  INFO event:generating song=3 duration=180s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T21:11:32.073114Z  INFO Text encoding: 0.01s
+2026-02-22T21:11:32.073218Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:11:36.795714Z  INFO Diffusion (8 ODE steps): 4.72s
+2026-02-22T21:11:40.803211Z  INFO VAE decode: 4.01s
+2026-02-22T21:11:41.151386Z  INFO Total generate: 9.09s
+2026-02-22T21:11:41.156080Z  INFO event:song_ready song=3 seed=1771794692064091065 duration=180s gen=9.1s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T21:11:52.558707Z  INFO socket cmd: "skip"
+2026-02-22T21:11:52.568417Z  INFO Skipping song #0
+2026-02-22T21:11:52.568486Z  INFO Front buffer drained after 31.8s
+2026-02-22T21:11:52.568540Z  INFO event:song_done song=0
+2026-02-22T21:11:52.568626Z  INFO event:playing song=1 duration=180s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:11:52.599288Z  INFO Loaded song #2 into back buffer (20160000 samples, 210.0s)
+2026-02-22T21:11:52.599361Z  INFO Waiting for front buffer to drain: 17276928 samples remaining (180.0s)
+2026-02-22T21:11:54.546688Z  INFO socket cmd: "skip"
+2026-02-22T21:11:54.550057Z  INFO Skipping song #1
+2026-02-22T21:11:54.550073Z  INFO Front buffer drained after 2.0s
+2026-02-22T21:11:54.550095Z  INFO event:song_done song=1
+2026-02-22T21:11:54.550132Z  INFO event:playing song=2 duration=210s caption="late 90s pop punk comedy rock, obnoxious humor, funky bass r"
+2026-02-22T21:11:54.567362Z  INFO Loaded song #3 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:11:54.567398Z  INFO Waiting for front buffer to drain: 20156928 samples remaining (210.0s)
+2026-02-22T21:15:24.549349Z  INFO Front buffer drained after 210.0s
+2026-02-22T21:15:24.549407Z  INFO event:song_done song=2
+2026-02-22T21:15:24.549444Z  INFO event:playing song=3 duration=180s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T21:15:24.639192Z  INFO Queue empty, using fallback: "hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T21:15:24.639235Z  INFO event:generating song=4 duration=180s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T21:15:24.658680Z  INFO Text encoding: 0.01s
+2026-02-22T21:15:24.658852Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:15:29.153804Z  INFO Diffusion (8 ODE steps): 4.49s
+2026-02-22T21:15:32.971473Z  INFO VAE decode: 3.82s
+2026-02-22T21:15:33.305099Z  INFO Total generate: 8.67s
+2026-02-22T21:15:33.310719Z  INFO event:song_ready song=4 seed=1771794924639220231 duration=180s gen=8.7s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T21:15:33.320151Z  INFO Loaded song #4 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:15:33.320193Z  INFO Waiting for front buffer to drain: 16438272 samples remaining (171.2s)
+2026-02-22T21:18:24.552142Z  INFO Front buffer drained after 171.2s
+2026-02-22T21:18:24.552199Z  INFO event:song_done song=3
+2026-02-22T21:18:24.552241Z  INFO event:playing song=4 duration=180s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T21:18:24.562675Z  INFO Queue empty, using fallback: "grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T21:18:24.562726Z  INFO event:generating song=5 duration=180s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T21:18:24.602751Z  INFO Text encoding: 0.01s
+2026-02-22T21:18:24.602899Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:18:29.092727Z  INFO Diffusion (8 ODE steps): 4.49s
+2026-02-22T21:18:32.902126Z  INFO VAE decode: 3.81s
+2026-02-22T21:18:33.236823Z  INFO Total generate: 8.67s
+2026-02-22T21:18:33.241765Z  INFO event:song_ready song=5 seed=1771795104562711374 duration=180s gen=8.7s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T21:18:33.250629Z  INFO Loaded song #5 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:18:33.250663Z  INFO Waiting for front buffer to drain: 16447488 samples remaining (171.3s)
+2026-02-22T21:21:24.551796Z  INFO Front buffer drained after 171.3s
+2026-02-22T21:21:24.551877Z  INFO event:song_done song=4
+2026-02-22T21:21:24.551936Z  INFO event:playing song=5 duration=180s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T21:21:24.694448Z  INFO Queue empty, using fallback: "drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T21:21:24.694519Z  INFO event:generating song=6 duration=180s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T21:21:24.717102Z  INFO Text encoding: 0.01s
+2026-02-22T21:21:24.717229Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:21:29.188681Z  INFO Diffusion (8 ODE steps): 4.47s
+2026-02-22T21:21:33.016304Z  INFO VAE decode: 3.83s
+2026-02-22T21:21:33.377372Z  INFO Total generate: 8.68s
+2026-02-22T21:21:33.382854Z  INFO event:song_ready song=6 seed=1771795284694484979 duration=180s gen=8.7s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T21:21:33.392551Z  INFO Loaded song #6 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:21:33.392603Z  INFO Waiting for front buffer to drain: 16432128 samples remaining (171.2s)
+2026-02-22T21:24:24.558317Z  INFO Front buffer drained after 171.2s
+2026-02-22T21:24:24.558381Z  INFO event:song_done song=5
+2026-02-22T21:24:24.558432Z  INFO event:playing song=6 duration=180s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T21:24:24.633786Z  INFO Queue empty, using fallback: "metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T21:24:24.633871Z  INFO event:generating song=7 duration=180s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T21:24:24.654382Z  INFO Text encoding: 0.01s
+2026-02-22T21:24:24.654522Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:24:29.128699Z  INFO Diffusion (8 ODE steps): 4.47s
+2026-02-22T21:24:32.938937Z  INFO VAE decode: 3.81s
+2026-02-22T21:24:33.266217Z  INFO Total generate: 8.63s
+2026-02-22T21:24:33.271179Z  INFO event:song_ready song=7 seed=1771795464633838354 duration=180s gen=8.6s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T21:24:33.280381Z  INFO Loaded song #7 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:24:33.280416Z  INFO Waiting for front buffer to drain: 16444416 samples remaining (171.3s)
+2026-02-22T21:27:24.558443Z  INFO Front buffer drained after 171.3s
+2026-02-22T21:27:24.558503Z  INFO event:song_done song=6
+2026-02-22T21:27:24.558561Z  INFO event:playing song=7 duration=180s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T21:27:24.722996Z  INFO Queue empty, using fallback: "industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T21:27:24.723059Z  INFO event:generating song=8 duration=180s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T21:27:24.745626Z  INFO Text encoding: 0.01s
+2026-02-22T21:27:24.745774Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:27:29.181698Z  INFO Diffusion (8 ODE steps): 4.44s
+2026-02-22T21:27:32.970805Z  INFO VAE decode: 3.79s
+2026-02-22T21:27:33.308114Z  INFO Total generate: 8.58s
+2026-02-22T21:27:33.313086Z  INFO event:song_ready song=8 seed=1771795644723035432 duration=180s gen=8.6s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T21:27:33.322136Z  INFO Loaded song #8 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:27:33.322171Z  INFO Waiting for front buffer to drain: 16438272 samples remaining (171.2s)
+2026-02-22T21:30:24.561139Z  INFO Front buffer drained after 171.2s
+2026-02-22T21:30:24.561199Z  INFO event:song_done song=7
+2026-02-22T21:30:24.561241Z  INFO event:playing song=8 duration=180s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T21:30:24.564535Z  INFO Queue empty, using fallback: "post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T21:30:24.564585Z  INFO event:generating song=9 duration=180s caption="post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T21:30:24.582927Z  INFO Text encoding: 0.01s
+2026-02-22T21:30:24.583044Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:30:29.063234Z  INFO Diffusion (8 ODE steps): 4.48s
+2026-02-22T21:30:32.880561Z  INFO VAE decode: 3.82s
+2026-02-22T21:30:33.216485Z  INFO Total generate: 8.65s
+2026-02-22T21:30:33.221675Z  INFO event:song_ready song=9 seed=1771795824564563016 duration=180s gen=8.7s caption="post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T21:30:33.230674Z  INFO Loaded song #9 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:30:33.230709Z  INFO Waiting for front buffer to drain: 16447488 samples remaining (171.3s)
+2026-02-22T21:33:24.562580Z  INFO Front buffer drained after 171.3s
+2026-02-22T21:33:24.562653Z  INFO event:song_done song=8
+2026-02-22T21:33:24.562720Z  INFO event:playing song=9 duration=180s caption="post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T21:33:24.672553Z  INFO Queue empty, using fallback: "garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T21:33:24.672666Z  INFO event:generating song=10 duration=180s caption="garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T21:33:24.697399Z  INFO Text encoding: 0.01s
+2026-02-22T21:33:24.697553Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:33:29.164429Z  INFO Diffusion (8 ODE steps): 4.47s
+2026-02-22T21:33:32.967979Z  INFO VAE decode: 3.80s
+2026-02-22T21:33:33.300524Z  INFO Total generate: 8.63s
+2026-02-22T21:33:33.305437Z  INFO event:song_ready song=10 seed=1771796004672640119 duration=180s gen=8.6s caption="garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T21:33:33.316799Z  INFO Loaded song #10 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:33:33.316836Z  INFO Waiting for front buffer to drain: 16441344 samples remaining (171.3s)
+2026-02-22T21:36:24.583792Z  INFO Front buffer drained after 171.3s
+2026-02-22T21:36:24.583854Z  INFO event:song_done song=9
+2026-02-22T21:36:24.583925Z  INFO event:playing song=10 duration=180s caption="garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T21:36:24.758893Z  INFO Queue empty, using fallback: "techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T21:36:24.758955Z  INFO event:generating song=11 duration=180s caption="techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T21:36:24.782258Z  INFO Text encoding: 0.01s
+2026-02-22T21:36:24.782376Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:36:29.021339Z  INFO Diffusion (8 ODE steps): 4.24s
+2026-02-22T21:36:32.557518Z  INFO VAE decode: 3.54s
+2026-02-22T21:36:32.893657Z  INFO Total generate: 8.13s
+2026-02-22T21:36:32.898393Z  INFO event:song_ready song=11 seed=1771796184758934373 duration=180s gen=8.1s caption="techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T21:36:32.909049Z  INFO Loaded song #11 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:36:32.909092Z  INFO Waiting for front buffer to drain: 16481280 samples remaining (171.7s)
+2026-02-22T21:39:24.581580Z  INFO Front buffer drained after 171.7s
+2026-02-22T21:39:24.581652Z  INFO event:song_done song=10
+2026-02-22T21:39:24.581703Z  INFO event:playing song=11 duration=180s caption="techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T21:39:24.750047Z  INFO Queue empty, using fallback: "ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T21:39:24.750102Z  INFO event:generating song=12 duration=180s caption="ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T21:39:24.773376Z  INFO Text encoding: 0.01s
+2026-02-22T21:39:24.773522Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:39:28.997745Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T21:39:32.526156Z  INFO VAE decode: 3.53s
+2026-02-22T21:39:32.851332Z  INFO Total generate: 8.10s
+2026-02-22T21:39:32.856256Z  INFO event:song_ready song=12 seed=1771796364750081666 duration=180s gen=8.1s caption="ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T21:39:32.865275Z  INFO Loaded song #12 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:39:32.865300Z  INFO Waiting for front buffer to drain: 16487424 samples remaining (171.7s)
+2026-02-22T21:42:24.583332Z  INFO Front buffer drained after 171.7s
+2026-02-22T21:42:24.583400Z  INFO event:song_done song=11
+2026-02-22T21:42:24.583447Z  INFO event:playing song=12 duration=180s caption="ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T21:42:24.707859Z  INFO Queue empty, using fallback: "psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T21:42:24.707930Z  INFO event:generating song=13 duration=180s caption="psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T21:42:24.732118Z  INFO Text encoding: 0.01s
+2026-02-22T21:42:24.732224Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:42:28.931662Z  INFO Diffusion (8 ODE steps): 4.20s
+2026-02-22T21:42:32.460642Z  INFO VAE decode: 3.53s
+2026-02-22T21:42:32.784783Z  INFO Total generate: 8.08s
+2026-02-22T21:42:32.789812Z  INFO event:song_ready song=13 seed=1771796544707906007 duration=180s gen=8.1s caption="psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T21:42:32.798986Z  INFO Loaded song #13 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:42:32.799026Z  INFO Waiting for front buffer to drain: 16493568 samples remaining (171.8s)
+2026-02-22T21:45:24.585280Z  INFO Front buffer drained after 171.8s
+2026-02-22T21:45:24.585340Z  INFO event:song_done song=12
+2026-02-22T21:45:24.585383Z  INFO event:playing song=13 duration=180s caption="psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T21:45:24.641989Z  INFO Queue empty, using fallback: "hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T21:45:24.642050Z  INFO event:generating song=14 duration=180s caption="hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T21:45:24.665604Z  INFO Text encoding: 0.01s
+2026-02-22T21:45:24.665776Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:45:28.875323Z  INFO Diffusion (8 ODE steps): 4.21s
+2026-02-22T21:45:32.398770Z  INFO VAE decode: 3.52s
+2026-02-22T21:45:32.726958Z  INFO Total generate: 8.08s
+2026-02-22T21:45:32.731904Z  INFO event:song_ready song=14 seed=1771796724642027695 duration=180s gen=8.1s caption="hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T21:45:32.740725Z  INFO Loaded song #14 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:45:32.740761Z  INFO Waiting for front buffer to drain: 16499712 samples remaining (171.9s)
+2026-02-22T21:48:24.582695Z  INFO Front buffer drained after 171.8s
+2026-02-22T21:48:24.582758Z  INFO event:song_done song=13
+2026-02-22T21:48:24.582798Z  INFO event:playing song=14 duration=180s caption="hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T21:48:24.583581Z  INFO Queue empty, using fallback: "trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T21:48:24.583602Z  INFO event:generating song=15 duration=180s caption="trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T21:48:24.607415Z  INFO Text encoding: 0.01s
+2026-02-22T21:48:24.607519Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:48:28.827143Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T21:48:32.348286Z  INFO VAE decode: 3.52s
+2026-02-22T21:48:32.676799Z  INFO Total generate: 8.09s
+2026-02-22T21:48:32.681721Z  INFO event:song_ready song=15 seed=1771796904583605151 duration=180s gen=8.1s caption="trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T21:48:32.690623Z  INFO Loaded song #15 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:48:32.690662Z  INFO Waiting for front buffer to drain: 16502784 samples remaining (171.9s)
+2026-02-22T21:51:24.582658Z  INFO Front buffer drained after 171.9s
+2026-02-22T21:51:24.582748Z  INFO event:song_done song=14
+2026-02-22T21:51:24.582803Z  INFO event:playing song=15 duration=180s caption="trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T21:51:24.734367Z  INFO Queue empty, using fallback: "surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T21:51:24.734428Z  INFO event:generating song=16 duration=180s caption="surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T21:51:24.758664Z  INFO Text encoding: 0.01s
+2026-02-22T21:51:24.758842Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:51:28.956254Z  INFO Diffusion (8 ODE steps): 4.20s
+2026-02-22T21:51:32.474997Z  INFO VAE decode: 3.52s
+2026-02-22T21:51:32.792782Z  INFO Total generate: 8.06s
+2026-02-22T21:51:32.797415Z  INFO event:song_ready song=16 seed=1771797084734405091 duration=180s gen=8.1s caption="surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T21:51:32.807139Z  INFO Loaded song #16 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:51:32.807177Z  INFO Waiting for front buffer to drain: 16490496 samples remaining (171.8s)
+2026-02-22T21:54:24.581854Z  INFO Front buffer drained after 171.8s
+2026-02-22T21:54:24.581914Z  INFO event:song_done song=15
+2026-02-22T21:54:24.581958Z  INFO event:playing song=16 duration=180s caption="surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T21:54:24.648128Z  INFO Queue empty, using fallback: "aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:54:24.648196Z  INFO event:generating song=17 duration=180s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:54:24.671223Z  INFO Text encoding: 0.01s
+2026-02-22T21:54:24.671367Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:54:28.853133Z  INFO Diffusion (8 ODE steps): 4.18s
+2026-02-22T21:54:32.371976Z  INFO VAE decode: 3.52s
+2026-02-22T21:54:32.694493Z  INFO Total generate: 8.05s
+2026-02-22T21:54:32.699932Z  INFO event:song_ready song=17 seed=1771797264648171226 duration=180s gen=8.1s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:54:32.708763Z  INFO Loaded song #17 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:54:32.708802Z  INFO Waiting for front buffer to drain: 16502784 samples remaining (171.9s)
+2026-02-22T21:57:24.581213Z  INFO Front buffer drained after 171.9s
+2026-02-22T21:57:24.581271Z  INFO event:song_done song=16
+2026-02-22T21:57:24.581316Z  INFO event:playing song=17 duration=180s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T21:57:24.752584Z  INFO Queue empty, using fallback: "indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:57:24.752656Z  INFO event:generating song=18 duration=180s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:57:24.775722Z  INFO Text encoding: 0.01s
+2026-02-22T21:57:24.775864Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T21:57:28.978631Z  INFO Diffusion (8 ODE steps): 4.20s
+2026-02-22T21:57:32.495578Z  INFO VAE decode: 3.52s
+2026-02-22T21:57:32.816562Z  INFO Total generate: 8.06s
+2026-02-22T21:57:32.821542Z  INFO event:song_ready song=18 seed=1771797444752619409 duration=180s gen=8.1s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T21:57:32.830424Z  INFO Loaded song #18 into back buffer (17280000 samples, 180.0s)
+2026-02-22T21:57:32.830458Z  INFO Waiting for front buffer to drain: 16490496 samples remaining (171.8s)
+2026-02-22T22:00:24.585400Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:00:24.585457Z  INFO event:song_done song=17
+2026-02-22T22:00:24.585498Z  INFO event:playing song=18 duration=180s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T22:00:24.677746Z  INFO Queue empty, using fallback: "punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:00:24.677825Z  INFO event:generating song=19 duration=180s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:00:24.700738Z  INFO Text encoding: 0.01s
+2026-02-22T22:00:24.700873Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:00:28.920101Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:00:32.436773Z  INFO VAE decode: 3.52s
+2026-02-22T22:00:32.764523Z  INFO Total generate: 8.09s
+2026-02-22T22:00:32.769361Z  INFO event:song_ready song=19 seed=1771797624677784900 duration=180s gen=8.1s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:00:32.778978Z  INFO Loaded song #19 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:00:32.779013Z  INFO Waiting for front buffer to drain: 16493568 samples remaining (171.8s)
+2026-02-22T22:03:24.581874Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:03:24.581930Z  INFO event:song_done song=18
+2026-02-22T22:03:24.581973Z  INFO event:playing song=19 duration=180s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:03:24.625435Z  INFO Queue empty, using fallback: "hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:03:24.625490Z  INFO event:generating song=20 duration=180s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:03:24.648256Z  INFO Text encoding: 0.01s
+2026-02-22T22:03:24.648424Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:03:28.864775Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:03:32.387104Z  INFO VAE decode: 3.52s
+2026-02-22T22:03:32.715968Z  INFO Total generate: 8.09s
+2026-02-22T22:03:32.720868Z  INFO event:song_ready song=20 seed=1771797804625468156 duration=180s gen=8.1s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:03:32.729843Z  INFO Loaded song #20 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:03:32.729878Z  INFO Waiting for front buffer to drain: 16499712 samples remaining (171.9s)
+2026-02-22T22:06:24.581247Z  INFO Front buffer drained after 171.9s
+2026-02-22T22:06:24.581295Z  INFO event:song_done song=19
+2026-02-22T22:06:24.581336Z  INFO event:playing song=20 duration=180s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:06:24.771827Z  INFO Queue empty, using fallback: "grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:06:24.771889Z  INFO event:generating song=21 duration=180s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:06:24.794870Z  INFO Text encoding: 0.01s
+2026-02-22T22:06:24.794996Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:06:29.012340Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:06:32.532070Z  INFO VAE decode: 3.52s
+2026-02-22T22:06:32.849901Z  INFO Total generate: 8.08s
+2026-02-22T22:06:32.854499Z  INFO event:song_ready song=21 seed=1771797984771865765 duration=180s gen=8.1s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:06:32.863444Z  INFO Loaded song #21 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:06:32.863482Z  INFO Waiting for front buffer to drain: 16487424 samples remaining (171.7s)
+2026-02-22T22:09:24.580871Z  INFO Front buffer drained after 171.7s
+2026-02-22T22:09:24.580933Z  INFO event:song_done song=20
+2026-02-22T22:09:24.580989Z  INFO event:playing song=21 duration=180s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:09:24.706055Z  INFO Queue empty, using fallback: "drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:09:24.706121Z  INFO event:generating song=22 duration=180s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:09:24.728620Z  INFO Text encoding: 0.01s
+2026-02-22T22:09:24.728740Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:09:28.926654Z  INFO Diffusion (8 ODE steps): 4.20s
+2026-02-22T22:09:32.442370Z  INFO VAE decode: 3.52s
+2026-02-22T22:09:32.760344Z  INFO Total generate: 8.05s
+2026-02-22T22:09:32.764978Z  INFO event:song_ready song=22 seed=1771798164706092560 duration=180s gen=8.1s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:09:32.773883Z  INFO Loaded song #22 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:09:32.773922Z  INFO Waiting for front buffer to drain: 16493568 samples remaining (171.8s)
+2026-02-22T22:12:24.587915Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:12:24.587982Z  INFO event:song_done song=21
+2026-02-22T22:12:24.588028Z  INFO event:playing song=22 duration=180s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:12:24.619285Z  INFO Queue empty, using fallback: "metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T22:12:24.619339Z  INFO event:generating song=23 duration=180s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T22:12:24.642400Z  INFO Text encoding: 0.01s
+2026-02-22T22:12:24.642547Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:12:28.855766Z  INFO Diffusion (8 ODE steps): 4.21s
+2026-02-22T22:12:32.370560Z  INFO VAE decode: 3.51s
+2026-02-22T22:12:32.685546Z  INFO Total generate: 8.07s
+2026-02-22T22:12:32.690180Z  INFO event:song_ready song=23 seed=1771798344619319994 duration=180s gen=8.1s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T22:12:32.699127Z  INFO Loaded song #23 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:12:32.699170Z  INFO Waiting for front buffer to drain: 16502784 samples remaining (171.9s)
+2026-02-22T22:15:24.589746Z  INFO Front buffer drained after 171.9s
+2026-02-22T22:15:24.589803Z  INFO event:song_done song=22
+2026-02-22T22:15:24.589844Z  INFO event:playing song=23 duration=180s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T22:15:24.741783Z  INFO Queue empty, using fallback: "industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T22:15:24.741845Z  INFO event:generating song=24 duration=180s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T22:15:24.764933Z  INFO Text encoding: 0.01s
+2026-02-22T22:15:24.765089Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:15:28.972855Z  INFO Diffusion (8 ODE steps): 4.21s
+2026-02-22T22:15:32.487465Z  INFO VAE decode: 3.51s
+2026-02-22T22:15:32.810258Z  INFO Total generate: 8.07s
+2026-02-22T22:15:32.815222Z  INFO event:song_ready song=24 seed=1771798524741822710 duration=180s gen=8.1s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T22:15:32.824041Z  INFO Loaded song #24 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:15:32.824076Z  INFO Waiting for front buffer to drain: 16490496 samples remaining (171.8s)
+2026-02-22T22:18:24.586310Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:18:24.586372Z  INFO event:song_done song=23
+2026-02-22T22:18:24.586414Z  INFO event:playing song=24 duration=180s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T22:18:24.666365Z  INFO Queue empty, using fallback: "post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T22:18:24.666430Z  INFO event:generating song=25 duration=180s caption="post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T22:18:24.689204Z  INFO Text encoding: 0.01s
+2026-02-22T22:18:24.689362Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:18:28.909498Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:18:32.434377Z  INFO VAE decode: 3.52s
+2026-02-22T22:18:32.758124Z  INFO Total generate: 8.09s
+2026-02-22T22:18:32.763072Z  INFO event:song_ready song=25 seed=1771798704666406065 duration=180s gen=8.1s caption="post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T22:18:32.771857Z  INFO Loaded song #25 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:18:32.771898Z  INFO Waiting for front buffer to drain: 16496640 samples remaining (171.8s)
+2026-02-22T22:21:24.583691Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:21:24.583758Z  INFO event:song_done song=24
+2026-02-22T22:21:24.583798Z  INFO event:playing song=25 duration=180s caption="post-punk, angular guitar riffs, driving bass, cold atmosphe"
+2026-02-22T22:21:24.614678Z  INFO Queue empty, using fallback: "garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T22:21:24.614729Z  INFO event:generating song=26 duration=180s caption="garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T22:21:24.637804Z  INFO Text encoding: 0.01s
+2026-02-22T22:21:24.637962Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:21:28.860635Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:21:32.377371Z  INFO VAE decode: 3.52s
+2026-02-22T22:21:32.696350Z  INFO Total generate: 8.08s
+2026-02-22T22:21:32.701423Z  INFO event:song_ready song=26 seed=1771798884614705727 duration=180s gen=8.1s caption="garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T22:21:32.710265Z  INFO Loaded song #26 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:21:32.710305Z  INFO Waiting for front buffer to drain: 16499712 samples remaining (171.9s)
+2026-02-22T22:24:24.581807Z  INFO Front buffer drained after 171.9s
+2026-02-22T22:24:24.581863Z  INFO event:song_done song=25
+2026-02-22T22:24:24.581895Z  INFO event:playing song=26 duration=180s caption="garage rock, fuzzy guitars, stomping beat, raw energy, no-fr"
+2026-02-22T22:24:24.753197Z  INFO Queue empty, using fallback: "techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T22:24:24.753253Z  INFO event:generating song=27 duration=180s caption="techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T22:24:24.775082Z  INFO Text encoding: 0.01s
+2026-02-22T22:24:24.775258Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:24:28.979424Z  INFO Diffusion (8 ODE steps): 4.20s
+2026-02-22T22:24:32.496807Z  INFO VAE decode: 3.52s
+2026-02-22T22:24:32.823341Z  INFO Total generate: 8.07s
+2026-02-22T22:24:32.828324Z  INFO event:song_ready song=27 seed=1771799064753231625 duration=180s gen=8.1s caption="techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T22:24:32.837189Z  INFO Loaded song #27 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:24:32.837225Z  INFO Waiting for front buffer to drain: 16487424 samples remaining (171.7s)
+2026-02-22T22:27:24.589700Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:27:24.589757Z  INFO event:song_done song=26
+2026-02-22T22:27:24.589793Z  INFO event:playing song=27 duration=180s caption="techno, relentless kick drum, acid bassline, hypnotic loop, "
+2026-02-22T22:27:24.679764Z  INFO Queue empty, using fallback: "ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T22:27:24.679837Z  INFO event:generating song=28 duration=180s caption="ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T22:27:24.703282Z  INFO Text encoding: 0.01s
+2026-02-22T22:27:24.703424Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:27:28.929955Z  INFO Diffusion (8 ODE steps): 4.23s
+2026-02-22T22:27:32.445999Z  INFO VAE decode: 3.52s
+2026-02-22T22:27:32.761422Z  INFO Total generate: 8.08s
+2026-02-22T22:27:32.766055Z  INFO event:song_ready song=28 seed=1771799244679811084 duration=180s gen=8.1s caption="ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T22:27:32.774928Z  INFO Loaded song #28 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:27:32.774967Z  INFO Waiting for front buffer to drain: 16493568 samples remaining (171.8s)
+2026-02-22T22:30:24.588498Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:30:24.588561Z  INFO event:song_done song=27
+2026-02-22T22:30:24.588607Z  INFO event:playing song=28 duration=180s caption="ska punk, offbeat guitar, horn section, fast tempo, bouncy e"
+2026-02-22T22:30:24.617911Z  INFO Queue empty, using fallback: "psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T22:30:24.617963Z  INFO event:generating song=29 duration=180s caption="psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T22:30:24.641358Z  INFO Text encoding: 0.01s
+2026-02-22T22:30:24.641516Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:30:28.847598Z  INFO Diffusion (8 ODE steps): 4.21s
+2026-02-22T22:30:32.363424Z  INFO VAE decode: 3.52s
+2026-02-22T22:30:32.691810Z  INFO Total generate: 8.07s
+2026-02-22T22:30:32.696651Z  INFO event:song_ready song=29 seed=1771799424617943713 duration=180s gen=8.1s caption="psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T22:30:32.705647Z  INFO Loaded song #29 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:30:32.705687Z  INFO Waiting for front buffer to drain: 16502784 samples remaining (171.9s)
+2026-02-22T22:33:24.583522Z  INFO Front buffer drained after 171.9s
+2026-02-22T22:33:24.583584Z  INFO event:song_done song=28
+2026-02-22T22:33:24.583633Z  INFO event:playing song=29 duration=180s caption="psychedelic rock, wah guitar, swirling organ, heavy drums, t"
+2026-02-22T22:33:24.748313Z  INFO Queue empty, using fallback: "hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T22:33:24.748378Z  INFO event:generating song=30 duration=180s caption="hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T22:33:24.772148Z  INFO Text encoding: 0.01s
+2026-02-22T22:33:24.772288Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:33:28.997761Z  INFO Diffusion (8 ODE steps): 4.23s
+2026-02-22T22:33:32.515862Z  INFO VAE decode: 3.52s
+2026-02-22T22:33:32.842068Z  INFO Total generate: 8.09s
+2026-02-22T22:33:32.847026Z  INFO event:song_ready song=30 seed=1771799604748351910 duration=180s gen=8.1s caption="hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T22:33:32.855946Z  INFO Loaded song #30 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:33:32.855983Z  INFO Waiting for front buffer to drain: 16487424 samples remaining (171.7s)
+2026-02-22T22:36:24.585921Z  INFO Front buffer drained after 171.7s
+2026-02-22T22:36:24.585993Z  INFO event:song_done song=29
+2026-02-22T22:36:24.586039Z  INFO event:playing song=30 duration=180s caption="hardcore punk, blast beats, screamed vocals, breakneck speed"
+2026-02-22T22:36:24.699298Z  INFO Queue empty, using fallback: "trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T22:36:24.699369Z  INFO event:generating song=31 duration=180s caption="trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T22:36:24.722189Z  INFO Text encoding: 0.01s
+2026-02-22T22:36:24.722317Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:36:28.933719Z  INFO Diffusion (8 ODE steps): 4.21s
+2026-02-22T22:36:32.448674Z  INFO VAE decode: 3.51s
+2026-02-22T22:36:32.767429Z  INFO Total generate: 8.07s
+2026-02-22T22:36:32.771979Z  INFO event:song_ready song=31 seed=1771799784699344819 duration=180s gen=8.1s caption="trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T22:36:32.780881Z  INFO Loaded song #31 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:36:32.780914Z  INFO Waiting for front buffer to drain: 16493568 samples remaining (171.8s)
+2026-02-22T22:39:24.585803Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:39:24.585881Z  INFO event:song_done song=30
+2026-02-22T22:39:24.585928Z  INFO event:playing song=31 duration=180s caption="trip hop, dark beats, haunting samples, heavy bass, nocturna"
+2026-02-22T22:39:24.624239Z  INFO Queue empty, using fallback: "surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T22:39:24.624302Z  INFO event:generating song=32 duration=180s caption="surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T22:39:24.647028Z  INFO Text encoding: 0.01s
+2026-02-22T22:39:24.647178Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:39:28.875432Z  INFO Diffusion (8 ODE steps): 4.23s
+2026-02-22T22:39:32.393434Z  INFO VAE decode: 3.52s
+2026-02-22T22:39:32.720584Z  INFO Total generate: 8.10s
+2026-02-22T22:39:32.725621Z  INFO event:song_ready song=32 seed=1771799964624272385 duration=180s gen=8.1s caption="surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T22:39:32.734524Z  INFO Loaded song #32 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:39:32.734558Z  INFO Waiting for front buffer to drain: 16499712 samples remaining (171.9s)
+2026-02-22T22:42:24.584410Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:42:24.584492Z  INFO event:song_done song=31
+2026-02-22T22:42:24.584539Z  INFO event:playing song=32 duration=180s caption="surf rock, reverb-drenched guitar, driving drums, energetic "
+2026-02-22T22:42:24.777905Z  INFO Queue empty, using fallback: "aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T22:42:24.777969Z  INFO event:generating song=33 duration=180s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T22:42:24.800411Z  INFO Text encoding: 0.01s
+2026-02-22T22:42:24.800568Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:42:29.022849Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:42:32.536783Z  INFO VAE decode: 3.51s
+2026-02-22T22:42:32.862130Z  INFO Total generate: 8.08s
+2026-02-22T22:42:32.867126Z  INFO event:song_ready song=33 seed=1771800144777940151 duration=180s gen=8.1s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T22:42:32.875989Z  INFO Loaded song #33 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:42:32.876027Z  INFO Waiting for front buffer to drain: 16484352 samples remaining (171.7s)
+2026-02-22T22:45:24.582813Z  INFO Front buffer drained after 171.7s
+2026-02-22T22:45:24.582887Z  INFO event:song_done song=32
+2026-02-22T22:45:24.582922Z  INFO event:playing song=33 duration=180s caption="aggressive rap, hard-hitting 808s, dark trap beat, raw vocal"
+2026-02-22T22:45:24.721952Z  INFO Queue empty, using fallback: "indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T22:45:24.721993Z  INFO event:generating song=34 duration=180s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T22:45:24.745497Z  INFO Text encoding: 0.01s
+2026-02-22T22:45:24.745637Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:45:28.973181Z  INFO Diffusion (8 ODE steps): 4.23s
+2026-02-22T22:45:32.488704Z  INFO VAE decode: 3.52s
+2026-02-22T22:45:32.815502Z  INFO Total generate: 8.09s
+2026-02-22T22:45:32.820443Z  INFO event:song_ready song=34 seed=1771800324721970798 duration=180s gen=8.1s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T22:45:32.829404Z  INFO Loaded song #34 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:45:32.829443Z  INFO Waiting for front buffer to drain: 16490496 samples remaining (171.8s)
+2026-02-22T22:48:24.580927Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:48:24.581003Z  INFO event:song_done song=33
+2026-02-22T22:48:24.581037Z  INFO event:playing song=34 duration=180s caption="indie rock, jangly guitars, driving drums, raw vocals, garag"
+2026-02-22T22:48:24.676230Z  INFO Queue empty, using fallback: "punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:48:24.676271Z  INFO event:generating song=35 duration=180s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:48:24.698993Z  INFO Text encoding: 0.01s
+2026-02-22T22:48:24.699121Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:48:28.906208Z  INFO Diffusion (8 ODE steps): 4.21s
+2026-02-22T22:48:32.422792Z  INFO VAE decode: 3.52s
+2026-02-22T22:48:32.739509Z  INFO Total generate: 8.06s
+2026-02-22T22:48:32.744242Z  INFO event:song_ready song=35 seed=1771800504676248335 duration=180s gen=8.1s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:48:32.753211Z  INFO Loaded song #35 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:48:32.753244Z  INFO Waiting for front buffer to drain: 16496640 samples remaining (171.8s)
+2026-02-22T22:51:24.580945Z  INFO Front buffer drained after 171.8s
+2026-02-22T22:51:24.581008Z  INFO event:song_done song=34
+2026-02-22T22:51:24.581049Z  INFO event:playing song=35 duration=180s caption="punk rock, distorted power chords, fast tempo, shouted vocal"
+2026-02-22T22:51:24.599889Z  INFO Queue empty, using fallback: "hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:51:24.599931Z  INFO event:generating song=36 duration=180s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:51:24.623064Z  INFO Text encoding: 0.01s
+2026-02-22T22:51:24.623180Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:51:28.839325Z  INFO Diffusion (8 ODE steps): 4.22s
+2026-02-22T22:51:32.355202Z  INFO VAE decode: 3.52s
+2026-02-22T22:51:32.673757Z  INFO Total generate: 8.07s
+2026-02-22T22:51:32.678368Z  INFO event:song_ready song=36 seed=1771800684599908187 duration=180s gen=8.1s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:51:32.687396Z  INFO Loaded song #36 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:51:32.687437Z  INFO Waiting for front buffer to drain: 16502784 samples remaining (171.9s)
+2026-02-22T22:54:24.587635Z  INFO Front buffer drained after 171.9s
+2026-02-22T22:54:24.587690Z  INFO event:song_done song=35
+2026-02-22T22:54:24.587726Z  INFO event:playing song=36 duration=180s caption="hip hop boom bap, dusty vinyl samples, hard snare, deep sub "
+2026-02-22T22:54:24.734724Z  INFO Queue empty, using fallback: "grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:54:24.734794Z  INFO event:generating song=37 duration=180s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:54:24.756167Z  INFO Text encoding: 0.01s
+2026-02-22T22:54:24.756318Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:54:28.999576Z  INFO Diffusion (8 ODE steps): 4.24s
+2026-02-22T22:54:32.517826Z  INFO VAE decode: 3.52s
+2026-02-22T22:54:32.842647Z  INFO Total generate: 8.11s
+2026-02-22T22:54:32.847765Z  INFO event:song_ready song=37 seed=1771800864734760893 duration=180s gen=8.1s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:54:32.856802Z  INFO Loaded song #37 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:54:32.856837Z  INFO Waiting for front buffer to drain: 16487424 samples remaining (171.7s)
+2026-02-22T22:57:24.582935Z  INFO Front buffer drained after 171.7s
+2026-02-22T22:57:24.583013Z  INFO event:song_done song=36
+2026-02-22T22:57:24.583057Z  INFO event:playing song=37 duration=180s caption="grunge rock, heavy distortion, angst-filled vocals, slow cru"
+2026-02-22T22:57:24.706221Z  INFO Queue empty, using fallback: "drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:57:24.706278Z  INFO event:generating song=38 duration=180s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:57:24.729108Z  INFO Text encoding: 0.01s
+2026-02-22T22:57:24.729241Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T22:57:28.965202Z  INFO Diffusion (8 ODE steps): 4.24s
+2026-02-22T22:57:32.484480Z  INFO VAE decode: 3.52s
+2026-02-22T22:57:32.811601Z  INFO Total generate: 8.11s
+2026-02-22T22:57:32.816620Z  INFO event:song_ready song=38 seed=1771801044706249588 duration=180s gen=8.1s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T22:57:32.825937Z  INFO Loaded song #38 into back buffer (17280000 samples, 180.0s)
+2026-02-22T22:57:32.825993Z  INFO Waiting for front buffer to drain: 16490496 samples remaining (171.8s)
+2026-02-22T23:00:24.585939Z  INFO Front buffer drained after 171.8s
+2026-02-22T23:00:24.585998Z  INFO event:song_done song=37
+2026-02-22T23:00:24.586034Z  INFO event:playing song=38 duration=180s caption="drum and bass, rolling breakbeats, massive sub bass, dark at"
+2026-02-22T23:00:24.673538Z  INFO Queue empty, using fallback: "metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T23:00:24.673621Z  INFO event:generating song=39 duration=180s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T23:00:24.696542Z  INFO Text encoding: 0.01s
+2026-02-22T23:00:24.696667Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T23:00:28.928916Z  INFO Diffusion (8 ODE steps): 4.23s
+2026-02-22T23:00:32.444209Z  INFO VAE decode: 3.52s
+2026-02-22T23:00:32.763516Z  INFO Total generate: 8.09s
+2026-02-22T23:00:32.768127Z  INFO event:song_ready song=39 seed=1771801224673586594 duration=180s gen=8.1s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T23:00:32.777163Z  INFO Loaded song #39 into back buffer (17280000 samples, 180.0s)
+2026-02-22T23:00:32.777199Z  INFO Waiting for front buffer to drain: 16493568 samples remaining (171.8s)
+2026-02-22T23:03:24.598707Z  INFO Front buffer drained after 171.8s
+2026-02-22T23:03:24.598772Z  INFO event:song_done song=38
+2026-02-22T23:03:24.598810Z  INFO event:playing song=39 duration=180s caption="metal, down-tuned guitars, double kick drums, aggressive voc"
+2026-02-22T23:03:24.622470Z  INFO Queue empty, using fallback: "industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T23:03:24.622521Z  INFO event:generating song=40 duration=180s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T23:03:24.645486Z  INFO Text encoding: 0.01s
+2026-02-22T23:03:24.645650Z  INFO Generating 180.0s of audio (4500 frames)...
+2026-02-22T23:03:28.875757Z  INFO Diffusion (8 ODE steps): 4.23s
+2026-02-22T23:03:32.391745Z  INFO VAE decode: 3.52s
+2026-02-22T23:03:32.715223Z  INFO Total generate: 8.09s
+2026-02-22T23:03:32.720224Z  INFO event:song_ready song=40 seed=1771801404622508371 duration=180s gen=8.1s caption="industrial electronic, harsh textures, pounding rhythm, dist"
+2026-02-22T23:03:32.729060Z  INFO Loaded song #40 into back buffer (17280000 samples, 180.0s)
+2026-02-22T23:03:32.729098Z  INFO Waiting for front buffer to drain: 16499712 samples remaining (171.9s)
+2026-02-22T23:04:56.704440Z  INFO socket cmd: "request {\"caption\":\"2000s brit pop, cheeky female vocals, ska-influenced guitar, bouncy reggae beat, sarcastic witty lyrics, Lily Allen style\",\"lyrics\":\"Oh you think you're really something don't you\\nWith your fancy shoes and your vintage hat\\nYou talk about yourself for seven hours\\nAnd then you ask me how's your hair look at the back\\n\\nYou're so fit you're so cool you're so clever\\nAt least that's what you tell everyone you meet\\nBut I've seen you cry at cat commercials\\nAnd trip over nothing on a empty street\\n\\nLa la la you're not that special\\nLa la la I've seen your type before\\nLa la la you're not that special\\nYou just think you are and that's what makes it worse\\n\\nYou said you went to Oxford for the weekend\\nI know you mean the retail park not the school\\nYou pronounce quinoa three different ways\\nAnd none of them are right you beautiful fool\\n\\nYou've got opinions about everything under the sun\\nFrom architecture to the price of milk\\nBut when I ask you what you actually do for work\\nYou just say something vague about consulting silk\\n\\nLa la la you're not that special\\nLa la la I've seen your type before\\nLa la la you're not that special\\nBut I kind of like you anyway what for\",\"bpm\":120,\"key_scale\":\"F major\",\"duration_s\":200}"
+2026-02-22T23:04:56.704560Z  INFO event:generating song=41 duration=200s caption="2000s brit pop, cheeky female vocals, ska-influenced guitar,"
+2026-02-22T23:04:56.729849Z  INFO Text encoding: 0.01s
+2026-02-22T23:04:56.730684Z  INFO Generating 200.0s of audio (5000 frames)...
+2026-02-22T23:04:57.706229Z  INFO socket cmd: "request {\"caption\":\"cheeky brit pop, female vocalist, bouncy piano and guitar, tongue-in-cheek humor, upbeat ska pop, Lily Allen style\",\"lyrics\":\"Monday morning and the bus is late again\\nStanding in the rain with all the other working men\\nMy mascara's running and my coffee's getting cold\\nI'm twenty-seven but today I'm feeling old\\n\\nThe office kitchen smells like someone's burning toast\\nJanice from accounting is the one I hate the most\\nShe steals my yoghurt every single Friday afternoon\\nOne day Janice one day I'll put arsenic in your spoon\\n\\nBut it's alright, it's okay\\nAnother absolutely average day\\nIt's alright, it's okay\\nI'll do the same thing again anyway\\n\\nMy boyfriend says I'm being overdramatic again\\nI said you'd be dramatic too if you had to deal with Janice then\\nHe doesn't understand the politics of the fridge\\nThe passive aggressive notes the territorial sandwich bridge\\n\\nSo I come home and I kick off my shoes\\nPour a massive glass of wine and watch the evening news\\nThe world is ending but at least it's not just me\\nWho's having quite a rubbish day catastrophically\\n\\nBut it's alright, it's okay\\nAnother absolutely average day\\nIt's alright, it's okay\\nJanice if you're listening stay away\",\"bpm\":126,\"key_scale\":\"G major\",\"duration_s\":210}"
+2026-02-22T23:04:59.708390Z  INFO socket cmd: "queue"
+2026-02-22T23:05:02.237081Z  INFO Diffusion (8 ODE steps): 5.51s
+2026-02-22T23:05:05.183565Z  INFO socket cmd: "queue"
+2026-02-22T23:05:06.663697Z  INFO VAE decode: 4.43s
+2026-02-22T23:05:07.061499Z  INFO Total generate: 10.36s
+2026-02-22T23:05:07.066854Z  INFO event:song_ready song=41 seed=1771801496704511878 duration=200s gen=10.4s caption="2000s brit pop, cheeky female vocals, ska-influenced guitar,"
+2026-02-22T23:05:07.066910Z  INFO event:generating song=42 duration=210s caption="cheeky brit pop, female vocalist, bouncy piano and guitar, t"
+2026-02-22T23:05:07.075321Z  INFO Text encoding: 0.01s
+2026-02-22T23:05:07.076203Z  INFO Generating 210.0s of audio (5250 frames)...
+2026-02-22T23:05:13.381175Z  INFO Diffusion (8 ODE steps): 6.30s
+2026-02-22T23:05:17.989120Z  INFO VAE decode: 4.61s
+2026-02-22T23:05:18.430824Z  INFO Total generate: 11.36s
+2026-02-22T23:05:18.437348Z  INFO event:song_ready song=42 seed=1771801507066829597 duration=210s gen=11.4s caption="cheeky brit pop, female vocalist, bouncy piano and guitar, t"
+2026-02-22T23:05:23.703480Z  INFO socket cmd: "quit"
+2026-02-22T23:05:23.732205Z  INFO generation manager shut down

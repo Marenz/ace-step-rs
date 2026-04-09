@@ -50,6 +50,10 @@ pub struct ManagerConfig {
     ///
     /// Default: `None`.
     pub idle_unload_after: Option<Duration>,
+
+    /// When true, text encoder and VAE run on CPU, only DiT stays on GPU.
+    /// Reduces VRAM from ~13GB to ~10GB.
+    pub cpu_offload: bool,
 }
 
 impl Default for ManagerConfig {
@@ -59,6 +63,7 @@ impl Default for ManagerConfig {
             dtype: DType::F32,
             min_free_vram_bytes: 2 * 1024 * 1024 * 1024, // 2 GiB
             idle_unload_after: None,
+            cpu_offload: false,
         }
     }
 }
@@ -88,10 +93,15 @@ impl GenerationManager {
     pub async fn start(config: ManagerConfig) -> Result<Self> {
         // Load pipeline on the calling thread (blocking) then hand off to the worker.
         // We use spawn_blocking because pipeline loading does synchronous I/O and heavy compute.
+        let cpu_offload = config.cpu_offload;
         let pipeline = tokio::task::spawn_blocking(move || -> Result<AceStepPipeline> {
             let device = preferred_device(config.cuda_device);
-            tracing::info!(device = ?device, "loading ACE-Step pipeline");
-            AceStepPipeline::load(&device, config.dtype)
+            tracing::info!(device = ?device, cpu_offload, "loading ACE-Step pipeline");
+            if cpu_offload {
+                AceStepPipeline::load_with_cpu_offload(&device, config.dtype)
+            } else {
+                AceStepPipeline::load(&device, config.dtype)
+            }
         })
         .await
         .map_err(|join_error| Error::Manager(format!("pipeline load task panicked: {join_error}")))?
@@ -185,8 +195,14 @@ fn run_manager(
                 if pipeline.is_none() {
                     tracing::info!("pipeline not loaded — reloading");
                     let device = preferred_device(config.cuda_device);
-                    match AceStepPipeline::load(&device, config.dtype) {
-                        Ok(p) => pipeline = Some(p),
+                    match if config.cpu_offload {
+                        AceStepPipeline::load_with_cpu_offload(&device, config.dtype)
+                    } else {
+                        AceStepPipeline::load(&device, config.dtype)
+                    } {
+                        Ok(p) => {
+                            pipeline = Some(p);
+                        }
                         Err(e) => {
                             let _ = reply.send(Err(Error::Manager(format!(
                                 "failed to reload pipeline: {e}"

@@ -1,0 +1,1147 @@
+2026-02-22T14:04:24.232042Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:04:24.232284Z  INFO All models downloaded successfully
+2026-02-22T14:04:24.232862Z  INFO Loading tokenizer...
+2026-02-22T14:04:24.585537Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:04:25.017788Z  INFO Loading DiT generation model...
+2026-02-22T14:04:26.257409Z  INFO Loading VAE decoder...
+2026-02-22T14:04:26.305145Z  INFO Loading silence latent...
+2026-02-22T14:04:26.313418Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:04:26.313457Z  INFO Pipeline loaded successfully
+2026-02-22T14:04:26.321130Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:04:26.321157Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:04:26.321162Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:04:26.321164Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:04:26.321168Z  INFO   language: en
+2026-02-22T14:04:26.321170Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:04:26.321175Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:04:26.370088Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:04:27.007433Z  INFO Diffusion (8 ODE steps): 0.63s
+2026-02-22T14:04:27.556309Z  INFO VAE decode: 0.55s
+2026-02-22T14:04:27.615502Z  INFO Total chunk: 1.29s
+2026-02-22T14:04:27.629059Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:04:27.629081Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:04:27.629085Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:04:27.629087Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:04:27.629092Z  INFO   language: en
+2026-02-22T14:04:27.629094Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:04:27.629099Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:04:27.663623Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:04:28.224486Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:04:28.588674Z  INFO VAE decode: 0.36s
+2026-02-22T14:04:28.827165Z  INFO Total chunk: 1.20s
+2026-02-22T14:04:28.836800Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:04:28.836823Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:04:28.836826Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:04:28.836829Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:04:28.836832Z  INFO   language: en
+2026-02-22T14:04:28.836834Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:04:28.836839Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:04:28.871720Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:04:29.432091Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:04:29.799103Z  INFO VAE decode: 0.37s
+2026-02-22T14:04:30.035764Z  INFO Total chunk: 1.20s
+2026-02-22T14:04:57.700034Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:04:57.700063Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:04:57.700067Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:04:57.700083Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:04:57.700086Z  INFO   language: en
+2026-02-22T14:04:57.700088Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:04:57.700092Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:04:57.748874Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:04:58.306918Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:04:58.667580Z  INFO VAE decode: 0.36s
+2026-02-22T14:04:58.900449Z  INFO Total chunk: 1.19s
+2026-02-22T14:05:19.745531Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:05:19.745558Z  INFO   lyrics override: "test"
+2026-02-22T14:05:19.745561Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:05:19.745564Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:05:19.745567Z  INFO   lyrics: "test"
+2026-02-22T14:05:19.745568Z  INFO   language: en
+2026-02-22T14:05:19.745593Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:05:19.745598Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:05:19.798444Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:05:20.368703Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T14:05:20.730565Z  INFO VAE decode: 0.36s
+2026-02-22T14:05:20.967166Z  INFO Total chunk: 1.21s
+2026-02-22T14:05:41.805235Z  INFO === Streaming chunk 5 ===
+2026-02-22T14:05:41.805266Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:05:41.805269Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:05:41.805273Z  INFO   lyrics: "test"
+2026-02-22T14:05:41.805276Z  INFO   language: en
+2026-02-22T14:05:41.805278Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:05:41.805285Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:05:41.850932Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:05:42.416514Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T14:05:42.779272Z  INFO VAE decode: 0.36s
+2026-02-22T14:05:43.015844Z  INFO Total chunk: 1.20s
+2026-02-22T14:06:03.903173Z  INFO === Streaming chunk 6 ===
+2026-02-22T14:06:03.903202Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:06:03.903206Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:06:03.903209Z  INFO   lyrics: "test"
+2026-02-22T14:06:03.903212Z  INFO   language: en
+2026-02-22T14:06:03.903215Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:06:03.903222Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:06:03.948424Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:06:04.504011Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:06:04.866766Z  INFO VAE decode: 0.36s
+2026-02-22T14:06:05.101426Z  INFO Total chunk: 1.19s
+2026-02-22T14:06:25.970442Z  INFO === Streaming chunk 7 ===
+2026-02-22T14:06:25.970472Z  INFO   lyrics override: "IT STARTS SOON"
+2026-02-22T14:06:25.970476Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:06:25.970480Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:06:25.970484Z  INFO   lyrics: "IT STARTS SOON"
+2026-02-22T14:06:25.970496Z  INFO   language: en
+2026-02-22T14:06:25.970498Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:06:25.970502Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:06:26.017721Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:06:26.580202Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:06:26.942028Z  INFO VAE decode: 0.36s
+2026-02-22T14:06:27.174330Z  INFO Total chunk: 1.19s
+2026-02-22T14:06:48.053948Z  INFO === Streaming chunk 8 ===
+2026-02-22T14:06:48.053973Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:06:48.053977Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:06:48.053979Z  INFO   lyrics: "IT STARTS SOON"
+2026-02-22T14:06:48.053981Z  INFO   language: en
+2026-02-22T14:06:48.053983Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:06:48.053987Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:06:48.105829Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:06:48.662674Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:06:49.024649Z  INFO VAE decode: 0.36s
+2026-02-22T14:06:49.260761Z  INFO Total chunk: 1.19s
+2026-02-22T14:07:10.125463Z  INFO === Streaming chunk 9 ===
+2026-02-22T14:07:10.125493Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:07:10.125497Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:07:10.125500Z  INFO   lyrics: "IT STARTS SOON"
+2026-02-22T14:07:10.125504Z  INFO   language: en
+2026-02-22T14:07:10.125506Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:07:10.125512Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:07:10.169708Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:07:10.737195Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T14:07:11.105313Z  INFO VAE decode: 0.37s
+2026-02-22T14:07:11.338300Z  INFO Total chunk: 1.20s
+2026-02-22T14:07:32.199737Z  INFO === Streaming chunk 10 ===
+2026-02-22T14:07:32.199765Z  INFO   lyrics override: "I need to tell you a story about a long car that one day just showed up and star"
+2026-02-22T14:07:32.199769Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:07:32.199773Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:07:32.199776Z  INFO   lyrics: "I need to tell you a story about a long car that one day just showed up and started following us, itwas really creepy, d"
+2026-02-22T14:07:32.199779Z  INFO   language: en
+2026-02-22T14:07:32.199782Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:07:32.199787Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:07:32.257587Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:07:32.815648Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:07:33.181007Z  INFO VAE decode: 0.37s
+2026-02-22T14:07:33.417068Z  INFO Total chunk: 1.20s
+2026-02-22T14:07:54.244649Z  WARN RATING chunk=9 rating=- caption="Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music" metas="- bpm: 128\n- timesignature: 4/4\n- keyscale: A minor\n- duration: 30 seconds\n" lyrics="I need to tell you a story about a long car that one day just showed up and started following us, itwas really creepy, d" lang=en duration=30s overlap=8s crossfade=100ms shift=3 use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:07:54.283707Z  INFO === Streaming chunk 11 ===
+2026-02-22T14:07:54.283764Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:07:54.283770Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:07:54.283775Z  INFO   lyrics: "I need to tell you a story about a long car that one day just showed up and started following us, itwas really creepy, d"
+2026-02-22T14:07:54.283781Z  INFO   language: en
+2026-02-22T14:07:54.283784Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:07:54.283797Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:07:54.353205Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:07:54.989847Z  INFO Diffusion (8 ODE steps): 0.64s
+2026-02-22T14:07:55.356198Z  INFO VAE decode: 0.37s
+2026-02-22T14:07:55.636518Z  INFO Total chunk: 1.34s
+2026-02-22T14:08:16.397047Z  INFO === Streaming chunk 12 ===
+2026-02-22T14:08:16.397074Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:08:16.397079Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:08:16.397082Z  INFO   lyrics: "I need to tell you a story about a long car that one day just showed up and started following us, itwas really creepy, d"
+2026-02-22T14:08:16.397086Z  INFO   language: en
+2026-02-22T14:08:16.397089Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:08:16.397094Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:08:16.444469Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:08:17.006708Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:08:17.369795Z  INFO VAE decode: 0.36s
+2026-02-22T14:08:17.607022Z  INFO Total chunk: 1.20s
+2026-02-22T14:09:57.610328Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:09:57.610433Z  INFO All models downloaded successfully
+2026-02-22T14:09:57.610730Z  INFO Loading tokenizer...
+2026-02-22T14:09:57.943713Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:09:58.357838Z  INFO Loading DiT generation model...
+2026-02-22T14:09:59.574669Z  INFO Loading VAE decoder...
+2026-02-22T14:09:59.620741Z  INFO Loading silence latent...
+2026-02-22T14:09:59.628616Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:09:59.628649Z  INFO Pipeline loaded successfully
+2026-02-22T14:09:59.636119Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:09:59.636141Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:09:59.636146Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:09:59.636149Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:09:59.636153Z  INFO   language: en
+2026-02-22T14:09:59.636155Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:09:59.636159Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:09:59.684476Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:10:00.309547Z  INFO Diffusion (8 ODE steps): 0.62s
+2026-02-22T14:10:00.854812Z  INFO VAE decode: 0.55s
+2026-02-22T14:10:00.913167Z  INFO Total chunk: 1.28s
+2026-02-22T14:10:00.943556Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:10:00.943584Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:10:00.943603Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:10:00.943605Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:10:00.943608Z  INFO   language: en
+2026-02-22T14:10:00.943610Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:10:00.943614Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:10:00.977709Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:10:01.526900Z  INFO Diffusion (8 ODE steps): 0.55s
+2026-02-22T14:10:01.890268Z  INFO VAE decode: 0.36s
+2026-02-22T14:10:02.124719Z  INFO Total chunk: 1.18s
+2026-02-22T14:10:02.151213Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:10:02.151239Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:10:02.151242Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:10:02.151245Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:10:02.151248Z  INFO   language: en
+2026-02-22T14:10:02.151250Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:10:02.151254Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:10:02.185268Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:10:02.737657Z  INFO Diffusion (8 ODE steps): 0.55s
+2026-02-22T14:10:03.100054Z  INFO VAE decode: 0.36s
+2026-02-22T14:10:03.335447Z  INFO Total chunk: 1.18s
+2026-02-22T14:10:30.968436Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:10:30.968459Z  INFO   lyrics override: "Help me oh help me off this huge heap of goald"
+2026-02-22T14:10:30.968463Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:10:30.968467Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:10:30.968470Z  INFO   lyrics: "Help me oh help me off this huge heap of goald"
+2026-02-22T14:10:30.968473Z  INFO   language: en
+2026-02-22T14:10:30.968476Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:10:30.968481Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:10:31.019503Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:10:31.557082Z  INFO Diffusion (8 ODE steps): 0.54s
+2026-02-22T14:10:31.906532Z  INFO VAE decode: 0.35s
+2026-02-22T14:10:32.127272Z  INFO Total chunk: 1.14s
+2026-02-22T14:10:53.045577Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:10:53.045606Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:10:53.045610Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:10:53.045614Z  INFO   lyrics: "Help me oh help me off this huge heap of goald"
+2026-02-22T14:10:53.045618Z  INFO   language: en
+2026-02-22T14:10:53.045621Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:10:53.045627Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:10:53.096552Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:10:53.654679Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:10:54.010286Z  INFO VAE decode: 0.36s
+2026-02-22T14:10:54.243778Z  INFO Total chunk: 1.18s
+2026-02-22T14:11:15.129649Z  INFO === Streaming chunk 5 ===
+2026-02-22T14:11:15.129681Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:11:15.129698Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:11:15.129700Z  INFO   lyrics: "Help me oh help me off this huge heap of goald"
+2026-02-22T14:11:15.129703Z  INFO   language: en
+2026-02-22T14:11:15.129705Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:11:15.129709Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:11:15.178400Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:11:15.735465Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:11:16.096162Z  INFO VAE decode: 0.36s
+2026-02-22T14:11:16.326246Z  INFO Total chunk: 1.18s
+2026-02-22T14:11:37.209934Z  INFO === Streaming chunk 6 ===
+2026-02-22T14:11:37.209962Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:11:37.209965Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:11:37.209967Z  INFO   lyrics: "Help me oh help me off this huge heap of goald"
+2026-02-22T14:11:37.209969Z  INFO   language: en
+2026-02-22T14:11:37.209971Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:11:37.209975Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:11:37.262932Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:11:37.819721Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:11:38.178989Z  INFO VAE decode: 0.36s
+2026-02-22T14:11:38.411311Z  INFO Total chunk: 1.18s
+2026-02-22T14:11:59.284645Z  INFO === Streaming chunk 7 ===
+2026-02-22T14:11:59.284676Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:11:59.284680Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:11:59.284683Z  INFO   lyrics: "Help me oh help me off this huge heap of goald"
+2026-02-22T14:11:59.284687Z  INFO   language: en
+2026-02-22T14:11:59.284689Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:11:59.284696Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:11:59.338083Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:11:59.879070Z  INFO Diffusion (8 ODE steps): 0.54s
+2026-02-22T14:12:00.234513Z  INFO VAE decode: 0.36s
+2026-02-22T14:12:00.466036Z  INFO Total chunk: 1.16s
+2026-02-22T14:34:07.460963Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:34:07.461065Z  INFO All models downloaded successfully
+2026-02-22T14:34:07.461375Z  INFO Loading tokenizer...
+2026-02-22T14:34:07.813931Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:34:08.267662Z  INFO Loading DiT generation model...
+2026-02-22T14:34:09.492214Z  INFO Loading VAE decoder...
+2026-02-22T14:34:09.540459Z  INFO Loading silence latent...
+2026-02-22T14:34:09.549250Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:34:09.549297Z  INFO Pipeline loaded successfully
+2026-02-22T14:34:09.556304Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:34:09.556326Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:34:09.556331Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:34:09.556334Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:34:09.556339Z  INFO   language: en
+2026-02-22T14:34:09.556342Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:34:09.556347Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:34:09.605117Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:34:10.240059Z  INFO Diffusion (8 ODE steps): 0.63s
+2026-02-22T14:34:10.797267Z  INFO VAE decode: 0.56s
+2026-02-22T14:34:10.858479Z  INFO Total chunk: 1.30s
+2026-02-22T14:34:10.864141Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:34:10.864149Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:34:10.864152Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:34:10.864154Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:34:10.864156Z  INFO   language: en
+2026-02-22T14:34:10.864158Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:34:10.864161Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:34:10.899934Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:34:11.462624Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:34:11.829453Z  INFO VAE decode: 0.37s
+2026-02-22T14:34:12.073210Z  INFO Total chunk: 1.21s
+2026-02-22T14:34:12.122580Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:34:12.122612Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:34:12.122616Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:34:12.122619Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:34:12.122622Z  INFO   language: en
+2026-02-22T14:34:12.122625Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:34:12.122630Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:34:12.159752Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:34:12.728325Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T14:34:13.098778Z  INFO VAE decode: 0.37s
+2026-02-22T14:34:13.337758Z  INFO Total chunk: 1.21s
+2026-02-22T14:34:40.947007Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:34:40.947043Z  INFO   lyrics override: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:34:40.947049Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:34:40.947054Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:34:40.947059Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:34:40.947063Z  INFO   language: en
+2026-02-22T14:34:40.947066Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:34:40.947073Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:34:40.992357Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:34:41.573696Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:34:41.950435Z  INFO VAE decode: 0.38s
+2026-02-22T14:34:42.194920Z  INFO Total chunk: 1.24s
+2026-02-22T14:35:02.981323Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:35:02.981351Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:35:02.981355Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:35:02.981358Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:35:02.981361Z  INFO   language: en
+2026-02-22T14:35:02.981364Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:35:02.981381Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:35:03.026394Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:35:03.617095Z  INFO Diffusion (8 ODE steps): 0.59s
+2026-02-22T14:35:04.001493Z  INFO VAE decode: 0.38s
+2026-02-22T14:35:04.239163Z  INFO Total chunk: 1.25s
+2026-02-22T14:35:25.070023Z  INFO === Streaming chunk 5 ===
+2026-02-22T14:35:25.070053Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:35:25.070057Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:35:25.070061Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:35:25.070064Z  INFO   language: en
+2026-02-22T14:35:25.070067Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:35:25.070072Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:35:25.115324Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:35:25.698561Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:35:26.078070Z  INFO VAE decode: 0.38s
+2026-02-22T14:35:26.319942Z  INFO Total chunk: 1.24s
+2026-02-22T14:35:47.155300Z  INFO === Streaming chunk 6 ===
+2026-02-22T14:35:47.155349Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:35:47.155354Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:35:47.155358Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:35:47.155362Z  INFO   language: en
+2026-02-22T14:35:47.155365Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:35:47.155372Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:35:47.204247Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:35:47.790651Z  INFO Diffusion (8 ODE steps): 0.59s
+2026-02-22T14:35:48.169050Z  INFO VAE decode: 0.38s
+2026-02-22T14:35:48.412902Z  INFO Total chunk: 1.25s
+2026-02-22T14:36:09.242901Z  INFO === Streaming chunk 7 ===
+2026-02-22T14:36:09.242932Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:36:09.242937Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:36:09.242940Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:36:09.242944Z  INFO   language: en
+2026-02-22T14:36:09.242947Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:36:09.242953Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:36:09.285979Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:36:09.882020Z  INFO Diffusion (8 ODE steps): 0.60s
+2026-02-22T14:36:10.274517Z  INFO VAE decode: 0.39s
+2026-02-22T14:36:10.532641Z  INFO Total chunk: 1.28s
+2026-02-22T14:36:31.274779Z  INFO === Streaming chunk 8 ===
+2026-02-22T14:36:31.274806Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:36:31.274809Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:36:31.274812Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:36:31.274815Z  INFO   language: en
+2026-02-22T14:36:31.274818Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:36:31.274823Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:36:31.320520Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:36:31.912310Z  INFO Diffusion (8 ODE steps): 0.59s
+2026-02-22T14:36:32.295515Z  INFO VAE decode: 0.38s
+2026-02-22T14:36:32.546248Z  INFO Total chunk: 1.26s
+2026-02-22T14:36:53.358477Z  INFO === Streaming chunk 9 ===
+2026-02-22T14:36:53.358510Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:36:53.358514Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:36:53.358517Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:36:53.358520Z  INFO   language: en
+2026-02-22T14:36:53.358523Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:36:53.358529Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:36:53.409077Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:36:53.993024Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:36:54.374319Z  INFO VAE decode: 0.38s
+2026-02-22T14:36:54.622436Z  INFO Total chunk: 1.25s
+2026-02-22T14:37:15.436295Z  INFO === Streaming chunk 10 ===
+2026-02-22T14:37:15.436348Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:37:15.436352Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:37:15.436355Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:37:15.436359Z  INFO   language: en
+2026-02-22T14:37:15.436361Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:37:15.436367Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:37:15.480998Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:37:16.069400Z  INFO Diffusion (8 ODE steps): 0.59s
+2026-02-22T14:37:16.452376Z  INFO VAE decode: 0.38s
+2026-02-22T14:37:16.699743Z  INFO Total chunk: 1.26s
+2026-02-22T14:37:37.518864Z  INFO === Streaming chunk 11 ===
+2026-02-22T14:37:37.518905Z  INFO   metas override: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:37:37.518910Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:37:37.518915Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:37:37.518919Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:37:37.518922Z  INFO   language: en
+2026-02-22T14:37:37.518925Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:37:37.518930Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:37:37.569364Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:37:47.720778Z  INFO Diffusion (8 ODE steps): 10.15s
+2026-02-22T14:37:53.734422Z  INFO VAE decode: 6.01s
+2026-02-22T14:37:54.252179Z  INFO Total chunk: 16.72s
+2026-02-22T14:37:59.601167Z  INFO === Streaming chunk 12 ===
+2026-02-22T14:37:59.601202Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:37:59.601207Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:37:59.601210Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:37:59.601213Z  INFO   language: en
+2026-02-22T14:37:59.601216Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:37:59.601223Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:37:59.637207Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:38:09.979748Z  INFO Diffusion (8 ODE steps): 10.34s
+2026-02-22T14:38:16.248917Z  INFO VAE decode: 6.27s
+2026-02-22T14:38:16.777564Z  INFO Total chunk: 17.18s
+2026-02-22T14:38:21.682837Z  INFO === Streaming chunk 13 ===
+2026-02-22T14:38:21.682868Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:38:21.682873Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:38:21.682876Z  INFO   lyrics: "Yeah oh yeah this is the moment, finally its here"
+2026-02-22T14:38:21.682879Z  INFO   language: en
+2026-02-22T14:38:21.682882Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:38:21.682888Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:38:21.719927Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:38:32.073093Z  INFO Diffusion (8 ODE steps): 10.35s
+2026-02-22T14:38:38.156525Z  INFO VAE decode: 6.08s
+2026-02-22T14:38:38.692768Z  INFO Total chunk: 17.01s
+2026-02-22T14:39:26.924779Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:39:26.924892Z  INFO All models downloaded successfully
+2026-02-22T14:39:26.925227Z  INFO Loading tokenizer...
+2026-02-22T14:39:27.292551Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:39:27.764731Z  INFO Loading DiT generation model...
+2026-02-22T14:39:29.192255Z  INFO Loading VAE decoder...
+2026-02-22T14:39:29.248381Z  INFO Loading silence latent...
+2026-02-22T14:39:29.257610Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:39:29.257645Z  INFO Pipeline loaded successfully
+2026-02-22T14:39:29.266556Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:39:29.266581Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:39:29.266588Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:39:29.266591Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:39:29.266595Z  INFO   language: en
+2026-02-22T14:39:29.266597Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:39:29.266604Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:39:29.320824Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:39:29.988556Z  INFO Diffusion (8 ODE steps): 0.66s
+2026-02-22T14:39:30.554201Z  INFO VAE decode: 0.57s
+2026-02-22T14:39:30.616764Z  INFO Total chunk: 1.35s
+2026-02-22T14:39:30.625200Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:39:30.625210Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:39:30.625214Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:39:30.625217Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:39:30.625221Z  INFO   language: en
+2026-02-22T14:39:30.625224Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:39:30.625229Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:39:30.660105Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:39:31.229215Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T14:39:31.601711Z  INFO VAE decode: 0.37s
+2026-02-22T14:39:31.841942Z  INFO Total chunk: 1.22s
+2026-02-22T14:39:31.882901Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:39:31.882942Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:39:31.882963Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:39:31.882965Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:39:31.882969Z  INFO   language: en
+2026-02-22T14:39:31.882971Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:39:31.882977Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:39:31.918008Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:39:32.499539Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:39:32.874092Z  INFO VAE decode: 0.37s
+2026-02-22T14:39:33.113996Z  INFO Total chunk: 1.23s
+2026-02-22T14:40:00.723559Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:40:00.723588Z  INFO   caption override: Nirvana, neon, Rap,
+2026-02-22T14:40:00.723593Z  INFO   lyrics override: "driving in my car all day"
+2026-02-22T14:40:00.723596Z  INFO   caption: Nirvana, neon, Rap,
+2026-02-22T14:40:00.723599Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:40:00.723602Z  INFO   lyrics: "driving in my car all day"
+2026-02-22T14:40:00.723604Z  INFO   language: en
+2026-02-22T14:40:00.723607Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:40:00.723611Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:40:00.769547Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:40:01.343712Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T14:40:01.712428Z  INFO VAE decode: 0.37s
+2026-02-22T14:40:01.949082Z  INFO Total chunk: 1.21s
+2026-02-22T14:40:22.772585Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:40:22.772627Z  INFO   caption: Nirvana, neon, Rap,
+2026-02-22T14:40:22.772630Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:40:22.772634Z  INFO   lyrics: "driving in my car all day"
+2026-02-22T14:40:22.772637Z  INFO   language: en
+2026-02-22T14:40:22.772640Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:40:22.772647Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:40:22.821041Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:40:23.408097Z  INFO Diffusion (8 ODE steps): 0.59s
+2026-02-22T14:40:23.783409Z  INFO VAE decode: 0.38s
+2026-02-22T14:40:24.021325Z  INFO Total chunk: 1.24s
+2026-02-22T14:40:44.840473Z  INFO === Streaming chunk 5 ===
+2026-02-22T14:40:44.840507Z  INFO   metas override: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:40:44.840511Z  INFO   caption: Nirvana, neon, Rap,
+2026-02-22T14:40:44.840514Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:40:44.840517Z  INFO   lyrics: "driving in my car all day"
+2026-02-22T14:40:44.840520Z  INFO   language: en
+2026-02-22T14:40:44.840523Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:40:44.840528Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:40:44.883339Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:40:55.641163Z  INFO Diffusion (8 ODE steps): 10.76s
+2026-02-22T14:41:01.957278Z  INFO VAE decode: 6.32s
+2026-02-22T14:41:02.509711Z  INFO Total chunk: 17.66s
+2026-02-22T14:41:06.938900Z  INFO === Streaming chunk 6 ===
+2026-02-22T14:41:06.938931Z  INFO   caption: Nirvana, neon, Rap,
+2026-02-22T14:41:06.938935Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:41:06.938938Z  INFO   lyrics: "driving in my car all day"
+2026-02-22T14:41:06.938941Z  INFO   language: en
+2026-02-22T14:41:06.938944Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:41:06.938950Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:41:06.974211Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:41:17.951469Z  INFO Diffusion (8 ODE steps): 10.98s
+2026-02-22T14:41:24.288230Z  INFO VAE decode: 6.34s
+2026-02-22T14:41:24.860662Z  INFO Total chunk: 17.92s
+2026-02-22T14:41:28.991266Z  INFO === Streaming chunk 7 ===
+2026-02-22T14:41:28.991301Z  INFO   metas override: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:41:28.991306Z  INFO   caption: Nirvana, neon, Rap,
+2026-02-22T14:41:28.991309Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:41:28.991312Z  INFO   lyrics: "driving in my car all day"
+2026-02-22T14:41:28.991315Z  INFO   language: en
+2026-02-22T14:41:28.991317Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:41:28.991324Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:41:29.026683Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:41:39.815621Z  INFO Diffusion (8 ODE steps): 10.79s
+2026-02-22T14:41:46.048664Z  INFO VAE decode: 6.23s
+2026-02-22T14:41:46.637089Z  INFO Total chunk: 17.65s
+2026-02-22T14:45:44.870909Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:45:44.871009Z  INFO All models downloaded successfully
+2026-02-22T14:45:44.871308Z  INFO Loading tokenizer...
+2026-02-22T14:45:45.188173Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:45:45.596115Z  INFO Loading DiT generation model...
+2026-02-22T14:45:46.810762Z  INFO Loading VAE decoder...
+2026-02-22T14:45:46.856996Z  INFO Loading silence latent...
+2026-02-22T14:45:46.865030Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:45:46.865068Z  INFO Pipeline loaded successfully
+2026-02-22T14:45:46.874106Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:45:46.874129Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:45:46.874135Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:45:46.874138Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:45:46.874141Z  INFO   language: en
+2026-02-22T14:45:46.874144Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:45:46.874150Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:45:46.923083Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:45:47.559161Z  INFO Diffusion (8 ODE steps): 0.63s
+2026-02-22T14:45:48.102305Z  INFO VAE decode: 0.54s
+2026-02-22T14:45:48.160317Z  INFO Total chunk: 1.29s
+2026-02-22T14:45:48.180454Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:45:48.180470Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:45:48.180473Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:45:48.180476Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:45:48.180480Z  INFO   language: en
+2026-02-22T14:45:48.180482Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:45:48.180488Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:45:48.215463Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:45:48.766965Z  INFO Diffusion (8 ODE steps): 0.55s
+2026-02-22T14:45:49.127379Z  INFO VAE decode: 0.36s
+2026-02-22T14:45:49.361135Z  INFO Total chunk: 1.18s
+2026-02-22T14:45:49.387283Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:45:49.387306Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:45:49.387330Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:45:49.387332Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:45:49.387336Z  INFO   language: en
+2026-02-22T14:45:49.387338Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:45:49.387343Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:45:49.421598Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:45:49.984460Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:45:50.350187Z  INFO VAE decode: 0.37s
+2026-02-22T14:45:50.585491Z  INFO Total chunk: 1.20s
+2026-02-22T14:46:18.202768Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:46:18.202794Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:46:18.202797Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:46:18.202799Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:46:18.202802Z  INFO   language: en
+2026-02-22T14:46:18.202804Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:46:18.202810Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:46:18.252978Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:46:18.812841Z  INFO Diffusion (8 ODE steps): 0.56s
+2026-02-22T14:46:19.172671Z  INFO VAE decode: 0.36s
+2026-02-22T14:46:19.404133Z  INFO Total chunk: 1.19s
+2026-02-22T14:46:40.254866Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:46:40.254895Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:46:40.254899Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:46:40.254902Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:46:40.254906Z  INFO   language: en
+2026-02-22T14:46:40.254909Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:46:40.254914Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:46:40.307117Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:46:40.862115Z  INFO Diffusion (8 ODE steps): 0.55s
+2026-02-22T14:46:41.220637Z  INFO VAE decode: 0.36s
+2026-02-22T14:46:41.453183Z  INFO Total chunk: 1.18s
+2026-02-22T14:47:02.354107Z  INFO === Streaming chunk 5 ===
+2026-02-22T14:47:02.354142Z  INFO   metas override: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 500 seconds
+
+2026-02-22T14:47:02.354148Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:47:02.354152Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 500 seconds
+
+2026-02-22T14:47:02.354155Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:47:02.354160Z  INFO   language: en
+2026-02-22T14:47:02.354162Z  INFO   config: duration=500s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:47:02.354170Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:47:02.397700Z  INFO Generating chunk (12500 frames, 500.0s)...
+2026-02-22T14:48:02.830777Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:48:02.830868Z  INFO All models downloaded successfully
+2026-02-22T14:48:02.831186Z  INFO Loading tokenizer...
+2026-02-22T14:48:03.151758Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:48:03.553511Z  INFO Loading DiT generation model...
+2026-02-22T14:48:04.741419Z  INFO Loading VAE decoder...
+2026-02-22T14:48:04.788358Z  INFO Loading silence latent...
+2026-02-22T14:48:04.795886Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:48:04.795920Z  INFO Pipeline loaded successfully
+2026-02-22T14:48:04.803527Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:48:04.803549Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:48:04.803553Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:48:04.803555Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:48:04.803558Z  INFO   language: en
+2026-02-22T14:48:04.803560Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:48:04.803563Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:48:04.851611Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:48:05.475180Z  INFO Diffusion (8 ODE steps): 0.62s
+2026-02-22T14:48:06.014507Z  INFO VAE decode: 0.54s
+2026-02-22T14:48:06.073192Z  INFO Total chunk: 1.27s
+2026-02-22T14:48:41.588329Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:48:41.588429Z  INFO All models downloaded successfully
+2026-02-22T14:48:41.588731Z  INFO Loading tokenizer...
+2026-02-22T14:48:41.923181Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:48:42.361752Z  INFO Loading DiT generation model...
+2026-02-22T14:48:43.674250Z  INFO Loading VAE decoder...
+2026-02-22T14:48:43.724098Z  INFO Loading silence latent...
+2026-02-22T14:48:43.731399Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:48:43.731429Z  INFO Pipeline loaded successfully
+2026-02-22T14:48:43.739037Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:48:43.739062Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:48:43.739079Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:48:43.739082Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:48:43.739086Z  INFO   language: en
+2026-02-22T14:48:43.739089Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:48:43.739093Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:48:43.788722Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:48:44.441195Z  INFO Diffusion (8 ODE steps): 0.65s
+2026-02-22T14:48:45.015054Z  INFO VAE decode: 0.57s
+2026-02-22T14:48:45.077252Z  INFO Total chunk: 1.34s
+2026-02-22T14:48:45.113626Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:48:45.113655Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:48:45.113658Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:48:45.113661Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:48:45.113665Z  INFO   language: en
+2026-02-22T14:48:45.113668Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:48:45.113674Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:48:45.150378Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:48:45.730841Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:48:46.117615Z  INFO VAE decode: 0.39s
+2026-02-22T14:48:46.360152Z  INFO Total chunk: 1.25s
+2026-02-22T14:48:46.392678Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:48:46.392705Z  INFO   metas override: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:48:46.392709Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:48:46.392712Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:48:46.392714Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:48:46.392717Z  INFO   language: en
+2026-02-22T14:48:46.392718Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:48:46.392725Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:48:46.428418Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:48:56.731414Z  INFO Diffusion (8 ODE steps): 10.30s
+2026-02-22T14:49:02.846164Z  INFO VAE decode: 6.11s
+2026-02-22T14:49:03.384914Z  INFO Total chunk: 16.99s
+2026-02-22T14:49:15.161778Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:49:15.161805Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:49:15.161809Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:49:15.161812Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:49:15.161816Z  INFO   language: en
+2026-02-22T14:49:15.161819Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:49:15.161824Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:49:15.198933Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:49:25.315519Z  INFO Diffusion (8 ODE steps): 10.12s
+2026-02-22T14:49:31.295680Z  INFO VAE decode: 5.98s
+2026-02-22T14:49:31.798702Z  INFO Total chunk: 16.64s
+2026-02-22T14:49:37.196305Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:49:37.196343Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:49:37.196347Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:49:37.196351Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:49:37.196355Z  INFO   language: en
+2026-02-22T14:49:37.196358Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:49:37.196362Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:49:37.232488Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:49:47.469272Z  INFO Diffusion (8 ODE steps): 10.24s
+2026-02-22T14:49:53.544244Z  INFO VAE decode: 6.07s
+2026-02-22T14:49:54.071903Z  INFO Total chunk: 16.88s
+2026-02-22T14:53:18.549622Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:53:18.549716Z  INFO All models downloaded successfully
+2026-02-22T14:53:18.550032Z  INFO Loading tokenizer...
+2026-02-22T14:53:18.893508Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:53:19.358177Z  INFO Loading DiT generation model...
+2026-02-22T14:53:20.552953Z  INFO Loading VAE decoder...
+2026-02-22T14:53:20.599252Z  INFO Loading silence latent...
+2026-02-22T14:53:20.605019Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:53:20.605041Z  INFO Pipeline loaded successfully
+2026-02-22T14:53:20.612349Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:53:20.612367Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:53:20.612385Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:53:20.612387Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:53:20.612390Z  INFO   language: en
+2026-02-22T14:53:20.612392Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:53:20.612395Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:53:20.659575Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:53:21.271359Z  INFO Diffusion (8 ODE steps): 0.61s
+2026-02-22T14:53:21.812850Z  INFO VAE decode: 0.54s
+2026-02-22T14:53:21.869984Z  INFO Total chunk: 1.26s
+2026-02-22T14:54:15.385604Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T14:54:15.385702Z  INFO All models downloaded successfully
+2026-02-22T14:54:15.386027Z  INFO Loading tokenizer...
+2026-02-22T14:54:15.727915Z  INFO Loading Qwen3 text encoder...
+2026-02-22T14:54:16.158535Z  INFO Loading DiT generation model...
+2026-02-22T14:54:17.415955Z  INFO Loading VAE decoder...
+2026-02-22T14:54:17.464487Z  INFO Loading silence latent...
+2026-02-22T14:54:17.472119Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T14:54:17.472179Z  INFO Pipeline loaded successfully
+2026-02-22T14:54:17.479759Z  INFO === Streaming chunk 0 ===
+2026-02-22T14:54:17.479789Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:54:17.479794Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:54:17.479798Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:54:17.479803Z  INFO   language: en
+2026-02-22T14:54:17.479806Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:54:17.479813Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T14:54:17.529128Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:54:18.171382Z  INFO Diffusion (8 ODE steps): 0.64s
+2026-02-22T14:54:18.735109Z  INFO VAE decode: 0.56s
+2026-02-22T14:54:18.795580Z  INFO Total chunk: 1.32s
+2026-02-22T14:54:18.837541Z  INFO === Streaming chunk 1 ===
+2026-02-22T14:54:18.837566Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:54:18.837580Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:54:18.837585Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:54:18.837589Z  INFO   language: en
+2026-02-22T14:54:18.837592Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:54:18.837598Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:54:18.873644Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:54:19.449419Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:54:19.826335Z  INFO VAE decode: 0.38s
+2026-02-22T14:54:20.070968Z  INFO Total chunk: 1.23s
+2026-02-22T14:54:20.073147Z  INFO === Streaming chunk 2 ===
+2026-02-22T14:54:20.073166Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T14:54:20.073169Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T14:54:20.073172Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T14:54:20.073190Z  INFO   language: en
+2026-02-22T14:54:20.073192Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:54:20.073197Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:54:20.109586Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T14:54:20.688091Z  INFO Diffusion (8 ODE steps): 0.58s
+2026-02-22T14:54:21.062632Z  INFO VAE decode: 0.37s
+2026-02-22T14:54:21.305954Z  INFO Total chunk: 1.23s
+2026-02-22T14:54:48.888276Z  INFO === Streaming chunk 3 ===
+2026-02-22T14:54:48.888308Z  INFO   caption override: country
+2026-02-22T14:54:48.888313Z  INFO   metas override: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:54:48.888316Z  INFO   lyrics override: "up and down and up the mountain way faster down but its always like that"
+2026-02-22T14:54:48.888319Z  INFO   caption: country
+2026-02-22T14:54:48.888321Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:54:48.888324Z  INFO   lyrics: "up and down and up the mountain way faster down but its always like that"
+2026-02-22T14:54:48.888326Z  INFO   language: en
+2026-02-22T14:54:48.888328Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:54:48.888335Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:54:48.936453Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:54:59.144274Z  INFO Diffusion (8 ODE steps): 10.21s
+2026-02-22T14:55:05.171637Z  INFO VAE decode: 6.03s
+2026-02-22T14:55:05.682741Z  INFO Total chunk: 16.78s
+2026-02-22T14:55:10.923603Z  INFO === Streaming chunk 4 ===
+2026-02-22T14:55:10.923645Z  INFO   caption: country
+2026-02-22T14:55:10.923649Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:55:10.923654Z  INFO   lyrics: "up and down and up the mountain way faster down but its always like that"
+2026-02-22T14:55:10.923659Z  INFO   language: en
+2026-02-22T14:55:10.923662Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:55:10.923667Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:55:10.956682Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:55:21.128829Z  INFO Diffusion (8 ODE steps): 10.17s
+2026-02-22T14:55:27.222426Z  INFO VAE decode: 6.09s
+2026-02-22T14:55:27.736003Z  INFO Total chunk: 16.81s
+2026-02-22T14:55:33.011216Z  INFO === Streaming chunk 5 ===
+2026-02-22T14:55:33.011258Z  INFO   caption: country
+2026-02-22T14:55:33.011262Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T14:55:33.011266Z  INFO   lyrics: "up and down and up the mountain way faster down but its always like that"
+2026-02-22T14:55:33.011271Z  INFO   language: en
+2026-02-22T14:55:33.011274Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T14:55:33.011282Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T14:55:33.044227Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T14:55:43.261450Z  INFO Diffusion (8 ODE steps): 10.22s
+2026-02-22T14:55:49.389447Z  INFO VAE decode: 6.13s
+2026-02-22T14:55:49.906636Z  INFO Total chunk: 16.90s
+2026-02-22T15:00:25.995499Z  INFO === Streaming chunk 6 ===
+2026-02-22T15:00:25.995547Z  INFO   caption: country
+2026-02-22T15:00:25.995554Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 300 seconds
+
+2026-02-22T15:00:25.995557Z  INFO   lyrics: "up and down and up the mountain way faster down but its always like that"
+2026-02-22T15:00:25.995561Z  INFO   language: en
+2026-02-22T15:00:25.995564Z  INFO   config: duration=300s overlap=8s crossfade=100ms shift=3
+2026-02-22T15:00:25.995572Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T15:00:26.042489Z  INFO Generating chunk (7500 frames, 300.0s)...
+2026-02-22T15:00:36.500477Z  INFO Diffusion (8 ODE steps): 10.46s
+2026-02-22T15:00:42.606049Z  INFO VAE decode: 6.11s
+2026-02-22T15:00:43.152554Z  INFO Total chunk: 17.14s
+2026-02-22T15:08:50.933602Z  INFO Downloading ACE-Step v1.5 models from HuggingFace...
+2026-02-22T15:08:50.934558Z  INFO All models downloaded successfully
+2026-02-22T15:08:50.934877Z  INFO Loading tokenizer...
+2026-02-22T15:08:51.261102Z  INFO Loading Qwen3 text encoder...
+2026-02-22T15:08:51.996810Z  INFO Loading DiT generation model...
+2026-02-22T15:08:57.714302Z  INFO Loading VAE decoder...
+2026-02-22T15:08:57.805420Z  INFO Loading silence latent...
+2026-02-22T15:08:57.812461Z  INFO Loaded silence_latent: shape [1, 15000, 64], dtype F32
+2026-02-22T15:08:57.812492Z  INFO Pipeline loaded successfully
+2026-02-22T15:08:57.819135Z  INFO === Streaming chunk 0 ===
+2026-02-22T15:08:57.819159Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T15:08:57.819164Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T15:08:57.819167Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T15:08:57.819171Z  INFO   language: en
+2026-02-22T15:08:57.819174Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T15:08:57.819178Z  INFO   is_first=true use_overlap=false use_timbre=false use_crossfade=true
+2026-02-22T15:08:57.873269Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T15:08:58.517385Z  INFO Diffusion (8 ODE steps): 0.64s
+2026-02-22T15:08:59.062976Z  INFO VAE decode: 0.55s
+2026-02-22T15:08:59.118690Z  INFO Total chunk: 1.30s
+2026-02-22T15:08:59.126480Z  INFO === Streaming chunk 1 ===
+2026-02-22T15:08:59.126492Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T15:08:59.126496Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T15:08:59.126499Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T15:08:59.126502Z  INFO   language: en
+2026-02-22T15:08:59.126505Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T15:08:59.126510Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T15:08:59.160025Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T15:08:59.712545Z  INFO Diffusion (8 ODE steps): 0.55s
+2026-02-22T15:09:00.077813Z  INFO VAE decode: 0.37s
+2026-02-22T15:09:00.315702Z  INFO Total chunk: 1.19s
+2026-02-22T15:09:00.333265Z  INFO === Streaming chunk 2 ===
+2026-02-22T15:09:00.333291Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T15:09:00.333296Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T15:09:00.333299Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T15:09:00.333305Z  INFO   language: en
+2026-02-22T15:09:00.333310Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T15:09:00.333322Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T15:09:00.368279Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T15:09:00.923238Z  INFO Diffusion (8 ODE steps): 0.55s
+2026-02-22T15:09:01.284707Z  INFO VAE decode: 0.36s
+2026-02-22T15:09:01.519531Z  INFO Total chunk: 1.19s
+2026-02-22T15:09:29.204948Z  INFO === Streaming chunk 3 ===
+2026-02-22T15:09:29.204985Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T15:09:29.205005Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T15:09:29.205007Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T15:09:29.205010Z  INFO   language: en
+2026-02-22T15:09:29.205012Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T15:09:29.205016Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T15:09:29.248794Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T15:09:29.840475Z  INFO Diffusion (8 ODE steps): 0.59s
+2026-02-22T15:09:30.217841Z  INFO VAE decode: 0.38s
+2026-02-22T15:09:30.457912Z  INFO Total chunk: 1.25s
+2026-02-22T15:09:51.238960Z  INFO === Streaming chunk 4 ===
+2026-02-22T15:09:51.238989Z  INFO   caption: Driving synthwave with retro 80s analog synths, pulsing bass, soaring arpeggios, neon-lit atmospheric pads, energetic beat with heavy kick and hi-hats, upbeat futuristic dance music
+2026-02-22T15:09:51.238993Z  INFO   metas: - bpm: 128
+- timesignature: 4/4
+- keyscale: A minor
+- duration: 30 seconds
+
+2026-02-22T15:09:51.238996Z  INFO   lyrics: "la la la la la la la la\nla la la la la la la la\noh oh oh oh oh oh oh oh\noh oh oh oh oh oh oh oh"
+2026-02-22T15:09:51.239000Z  INFO   language: en
+2026-02-22T15:09:51.239003Z  INFO   config: duration=30s overlap=8s crossfade=100ms shift=3
+2026-02-22T15:09:51.239008Z  INFO   is_first=false use_overlap=true use_timbre=true use_crossfade=true
+2026-02-22T15:09:51.300440Z  INFO Generating chunk (750 frames, 30.0s)...
+2026-02-22T15:09:51.868070Z  INFO Diffusion (8 ODE steps): 0.57s
+2026-02-22T15:09:52.235173Z  INFO VAE decode: 0.37s
+2026-02-22T15:09:52.474908Z  INFO Total chunk: 1.21s

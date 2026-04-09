@@ -85,6 +85,12 @@ struct Args {
     /// Set to 0 to disable.
     #[arg(long, default_value_t = 0)]
     idle_unload_secs: u64,
+
+    /// Enable CPU offload: text encoder and VAE run on CPU, only DiT stays on GPU.
+    /// Reduces VRAM from ~13GB to ~10GB, with minor speed penalty on text encoding
+    /// and VAE decode.
+    #[arg(long)]
+    cpu_offload: bool,
 }
 
 // ── Wire types ───────────────────────────────────────────────────────────────
@@ -231,6 +237,7 @@ async fn main() -> anyhow::Result<()> {
     let config = ManagerConfig {
         cuda_device: args.device,
         idle_unload_after,
+        cpu_offload: args.cpu_offload,
         ..ManagerConfig::default()
     };
     let manager = GenerationManager::start(config).await?;

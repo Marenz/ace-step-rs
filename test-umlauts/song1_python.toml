@@ -1,0 +1,57 @@
+task_type = "text2music"
+caption = "German Kabarett, dry, sharp, acoustic guitar, male vocal, spoken-word, deadpan"
+lyrics = """[verse]
+Österreich, du schönes Stück Erde
+Zwischen Würstelbuden und Gemütlichkeit
+Die Straßenbahn fährt über den Gürtel
+Und jeder Würstelstand hat seine Zeit
+
+[verse]
+Der Bürgermeister trägt die Würde
+Wie einen Überrock aus grünem Tuch
+Er hält das Hüftgold für natürlich
+Und führt sein Amt mit Überblick genug
+
+[chorus]
+Österreich, Österreich
+Du bist ein sonderbares Stück
+Mit Knödeln, Rösti, Würstelsuppe
+Und einem Hang zum stillen Glück
+
+[verse]
+Die Küche dampft, die Knödel köcheln
+Das Stück vom Bäcker schmeckt nach Übermut
+Die Mütter rühren, Väter nörgeln
+Und über allem liegt ein süßer Duft
+
+[verse]
+Das Büro schließt um fünf Uhr pünktlich
+Die Tür geht zu, die Stühle stehen leer
+Man hört den Schlüssel in der Türe
+Österreich braucht nämlich nichts so sehr
+
+[chorus]
+Österreich, Österreich
+Du bist ein sonderbares Stück
+Mit Knödeln, Rösti, Würstelsuppe
+Und einem Hang zum stillen Glück
+
+[bridge]
+Die Übertreibung ist hier Bürgerpflicht
+Die Höflichkeit ein dünner Küchenschlüssel
+Wer Österreich nicht kennt, der würde staunen
+Über dieses kleine, große Rätsel
+
+[outro]
+Österreich, du schönes Stück
+Du grünes, müdes, süßes Glück"""
+vocal_language = "de"
+duration = 240.0
+seed = 42
+save_dir = "/home/marenz/Projects/ace-step-rs/test-umlauts"
+batch_size = 1
+thinking = false
+instrumental = false
+audio_format = "ogg"
+inference_steps = 8
+guidance_scale = 7.0

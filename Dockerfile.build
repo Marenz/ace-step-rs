@@ -1,0 +1,14 @@
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+
+# Avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Rust toolchain + build deps
+RUN apt-get update && apt-get install -y \
+    curl build-essential pkg-config libssl-dev git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+WORKDIR /build

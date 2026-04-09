@@ -1,0 +1,59 @@
+task_type = "text2music"
+caption = "German Kabarett, dry, sharp, acoustic guitar, male vocal, spoken-word, deadpan"
+lyrics = """[verse]
+Fünf Brüder saßen über Büchern
+Und lösten Rätsel über Nacht
+Sie zählten Vögel, prüften Lügen
+Und hätten gern ein Stück gelacht
+
+[verse]
+Der Älteste trug schwere Züge
+Sein Rücken krümmt sich über Übungsbüchern
+Er hörte Flöte aus den Küchen
+Und dachte über Glück nach, über Brüchen
+
+[chorus]
+Überall nur Ärger, überall nur Mühe
+Die Gärten blühen spät, die Tücher trübe
+Wer Österreich versteht, versteht die Stücke
+Die zwischen Größe liegen und dem Glücke
+
+[verse]
+Die Mädchen sangen schöne Stücke
+Mit Wörtern voller Ö und Ü
+Sie führten Bäche, höhlten Hügel
+Und träumten über grüne Müh'
+
+[verse]
+Der Förster prüft die dürren Büsche
+Die Kräuter blühn am Türkenfeld
+Ein Stückchen Käse für die Mäuse
+Das wär doch schön für alle Welt
+
+[chorus]
+Überall nur Ärger, überall nur Mühe
+Die Gärten blühen spät, die Tücher trübe
+Wer Österreich versteht, versteht die Stücke
+Die zwischen Größe liegen und dem Glücke
+
+[bridge]
+Die Würde hängt am Türgriff fest
+Das Glück versteckt sich hinter Bücherregalen
+Öffne doch die Tür, du Österreicher
+Und hör die Vögel, Flüsse, Wälder prahlen
+
+[outro]
+Fünf Brüder, müde, über Büchern
+Ein Stück vom Glück, ein Stück Natur
+Österreich, du Rätsel über Rätseln
+Du schöne, sonderbare Uhr"""
+vocal_language = "de"
+duration = 240.0
+seed = 42
+save_dir = "/home/marenz/Projects/ace-step-rs/test-umlauts"
+batch_size = 1
+thinking = false
+instrumental = false
+audio_format = "ogg"
+inference_steps = 8
+guidance_scale = 7.0
