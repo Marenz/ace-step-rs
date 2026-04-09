@@ -319,12 +319,12 @@ async fn process_generate(req: GenerateRequest, manager: &GenerationManager) -> 
         return err(format!("duration_s must be between 1 and 600, got {}", req.duration_s));
     }
 
-    // Determine output format from the output path extension, default to mp3.
+    // Determine output format from the output path extension, default to ogg.
     let format = req.output.as_ref()
         .and_then(|p| std::path::Path::new(p).extension())
         .and_then(|e| e.to_str())
         .and_then(AudioFormat::parse)
-        .unwrap_or(AudioFormat::Mp3);
+        .unwrap_or(AudioFormat::Ogg);
 
     let params = GenerationParams {
         caption: req.caption,
