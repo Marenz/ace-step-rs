@@ -59,6 +59,9 @@ anyhow = "1"
 # Logging output
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+# HTTP server (optional, for generation daemon)
+axum = { version = "0.8", optional = true }
+
 # CLI audio playback + terminal input (behind "cli" feature)
 rodio = { version = "0.20", optional = true }
 cpal = { version = "0.15", optional = true }
@@ -76,6 +79,7 @@ cuda = ["candle-core/cuda", "candle-nn/cuda", "candle-transformers/cuda", "dep:c
 cudnn = ["cuda", "candle-core/cudnn"]
 metal = ["candle-core/metal", "candle-nn/metal", "candle-transformers/metal"]
 cli = ["dep:rodio", "dep:cpal", "dep:ringbuf", "dep:crossterm", "dep:ctrlc"]
+http = ["dep:axum"]
 
 # Optional audio encoding
 audio-ogg = ["dep:vorbis_rs"]
@@ -96,7 +100,7 @@ required-features = ["cli"]
 [[bin]]
 name = "generation-daemon"
 path = "src/bin/generation-daemon.rs"
-required-features = ["audio-ogg"]
+required-features = ["audio-ogg", "http"]
 
 [[bin]]
 name = "ace-step-client"

@@ -91,6 +91,10 @@ struct Args {
     /// and VAE decode.
     #[arg(long)]
     cpu_offload: bool,
+
+    /// HTTP port for REST API. If set, serves POST /generate alongside the Unix socket.
+    #[arg(long)]
+    http_port: Option<u16>,
 }
 
 // ── Wire types ───────────────────────────────────────────────────────────────
@@ -242,6 +246,16 @@ async fn main() -> anyhow::Result<()> {
     };
     let manager = GenerationManager::start(config).await?;
     tracing::info!("Pipeline ready. Listening on {:?}", args.socket);
+
+    // Start HTTP server if port specified
+    if let Some(port) = args.http_port {
+        let http_manager = manager.clone();
+        tokio::spawn(async move {
+            if let Err(e) = run_http_server(port, http_manager).await {
+                tracing::error!("HTTP server error: {e}");
+            }
+        });
+    }
 
     let listener = UnixListener::bind(&args.socket)?;
 
@@ -395,4 +409,102 @@ async fn send_response(
     }
 
     Ok(())
+}
+
+// ── HTTP Server ─────────────────────────────────────────────────────────────
+
+async fn run_http_server(port: u16, manager: GenerationManager) -> anyhow::Result<()> {
+    use axum::{Router, routing::post, http::StatusCode};
+
+    let app = Router::new()
+        .route("/generate", post(http_generate))
+        .with_state(manager);
+
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    tracing::info!("HTTP server listening on {addr}");
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+    Ok(())
+}
+
+async fn http_generate(
+    axum::extract::State(manager): axum::extract::State<GenerationManager>,
+    axum::Json(req): axum::Json<GenerateRequest>,
+) -> Result<axum::response::Response, axum::http::StatusCode> {
+    use axum::http::StatusCode;
+    use axum::response::IntoResponse;
+    use ace_step_rs::audio::{AudioFormat, encode_audio};
+
+    let format = req.output.as_ref()
+        .and_then(|p| std::path::Path::new(p).extension())
+        .and_then(|e| e.to_str())
+        .and_then(AudioFormat::parse)
+        .unwrap_or(AudioFormat::Ogg);
+
+    let params = GenerationParams {
+        caption: req.caption.clone(),
+        lyrics: req.lyrics,
+        metas: req.metas,
+        language: req.language,
+        duration_s: req.duration_s,
+        shift: req.shift,
+        seed: req.seed,
+        src_latents: None,
+        chunk_masks: None,
+        refer_audio: None,
+        refer_order: None,
+    };
+
+    tracing::info!(
+        caption = %params.caption,
+        duration_s = params.duration_s,
+        "HTTP generate request"
+    );
+
+    let output = manager.generate(params).await.map_err(|e| {
+        tracing::error!("generation failed: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let audio_bytes = encode_audio(format, &output.samples, output.sample_rate, 2).map_err(|e| {
+        tracing::error!("audio encoding failed: {e}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    let mime = match format {
+        AudioFormat::Ogg => "audio/ogg",
+        AudioFormat::Mp3 => "audio/mpeg",
+        AudioFormat::Wav => "audio/wav",
+    };
+
+    // Build filename from caption - sanitize for filesystem/HTTP
+    let safe_caption: String = req.caption.chars()
+        .filter(|c| c.is_alphanumeric() || *c == ' ' || *c == '-' || *c == '_')
+        .take(60)
+        .collect::<String>()
+        .trim().to_string()
+        .replace(' ', "_");
+    let safe_caption = if safe_caption.is_empty() { "song".to_string() } else { safe_caption };
+    let ext = match format {
+        AudioFormat::Ogg => "ogg",
+        AudioFormat::Mp3 => "mp3",
+        AudioFormat::Wav => "wav",
+    };
+    let filename = format!("{safe_caption}.{ext}");
+
+    tracing::info!(
+        format = ?format,
+        bytes = audio_bytes.len(),
+        "HTTP generate complete"
+    );
+
+    Ok((
+        StatusCode::OK,
+        [
+            ("content-type", mime.to_string()),
+            ("content-disposition", format!("attachment; filename=\"{filename}\"")),
+            ("content-length", audio_bytes.len().to_string()),
+        ],
+        audio_bytes,
+    ).into_response())
 }
