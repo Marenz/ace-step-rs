@@ -37,6 +37,18 @@ cargo run --release --example generate
 
 ### CUDA build notes
 
+- **2026-10 deployment:** the HTTP daemon is now the `generation-daemon` binary,
+  not the old example. Build with `cargo build --release --bin generation-daemon
+  --features audio-all,http` using the CUDA environment below. `audio-all`
+  includes MP3, which the Adapsis callers request. The deployed HTTP port is
+  **8092**; 8091 belongs to Chronica and returns 405 to generation requests.
+- Tumbleweed's LibreSSL 4.3.2 requires the updated lockfile (`openssl 0.10.81`,
+  `openssl-sys 0.9.117`). Older locked versions refuse to build against it.
+- If the temporary CUDA header shim has disappeared, recreate
+  `bits/mathcalls.h` in a build-only include directory. Push the macro
+  `__GLIBC_USE_IEC_60559_FUNCS_EXT_C23`, undefine/redefine it to 0, include-next
+  `<bits/mathcalls.h>`, then pop the macro. Point `CPLUS_INCLUDE_PATH` there.
+
 - **LIBRARY_PATH=/usr/lib64** — required because `/usr/lib/libcuda.so` is 32-bit; the 64-bit one is in `/usr/lib64/`
 - **NVCC_CCBIN=/usr/bin/g++-13** — glibc 2.42 has an `rsqrt` conflict with CUDA headers
 - **CPLUS_INCLUDE_PATH="/tmp/cuda-shim"** — header shim at `/tmp/cuda-shim/bits/mathcalls.h` suppresses `__GLIBC_USE_IEC_60559_FUNCS_EXT_C23`
